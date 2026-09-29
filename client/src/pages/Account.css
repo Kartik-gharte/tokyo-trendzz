@@ -1,0 +1,152 @@
+.account-page {
+    min-height: calc(100vh - 70px);
+    background: #f8f8f8;
+    padding: 50px 20px;
+}
+
+.account-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.account-header {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: #ffffff;
+    padding: 30px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.account-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #111111;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.account-header h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+}
+
+.account-header p {
+    margin: 0;
+    color: #777777;
+}
+
+.account-info {
+    background: #ffffff;
+    padding: 30px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.account-info h2 {
+    margin: 0 0 20px;
+    font-size: 20px;
+}
+
+.account-detail {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 15px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.account-detail:last-child {
+    border-bottom: none;
+}
+
+.account-detail span {
+    color: #777777;
+}
+
+.account-detail strong {
+    color: #111111;
+}
+
+.account-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.account-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #ffffff;
+    color: #111111;
+    text-decoration: none;
+    padding: 22px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    transition: 0.2s ease;
+}
+
+.account-option:hover {
+    border-color: #111111;
+    transform: translateY(-2px);
+}
+
+.account-option h3 {
+    margin: 0 0 5px;
+    font-size: 16px;
+}
+
+.account-option p {
+    margin: 0;
+    color: #777777;
+    font-size: 13px;
+}
+
+.account-logout {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 14px;
+    border: 1px solid #111111;
+    background: #ffffff;
+    color: #111111;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.account-logout:hover {
+    background: #111111;
+    color: #ffffff;
+}
+
+@media (max-width: 700px) {
+    .account-options {
+        grid-template-columns: 1fr;
+    }
+
+    .account-header {
+        padding: 22px;
+    }
+
+    .account-info {
+        padding: 22px;
+    }
+
+    .account-detail {
+        flex-direction: column;
+        gap: 5px;
+    }
+}

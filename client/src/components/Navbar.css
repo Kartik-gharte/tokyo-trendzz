@@ -1,0 +1,177 @@
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #ffffff;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.navbar-container {
+    max-width: 1400px;
+    height: 72px;
+    margin: 0 auto;
+    padding: 0 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Logo */
+
+.navbar-logo {
+    color: #111111;
+    text-decoration: none;
+    font-size: 23px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    white-space: nowrap;
+}
+
+.navbar-logo span {
+    font-weight: 400;
+    margin-left: 3px;
+}
+
+/* Navigation */
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    margin-left: 50px;
+}
+
+.navbar-links a {
+    color: #222222;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.navbar-links a:hover {
+    color: #777777;
+}
+
+/* Actions */
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.nav-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #111111;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+
+    padding: 5px;
+}
+
+.nav-icon:hover {
+    opacity: 0.6;
+}
+
+.cart-count {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+
+    width: 16px;
+    height: 16px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #111111;
+    color: white;
+
+    border-radius: 50%;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+/* Mobile */
+
+.mobile-menu-button {
+    display: none;
+
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* Mobile dropdown */
+
+.mobile-menu {
+    display: none;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+
+    .navbar-container {
+        height: 64px;
+        padding: 0 20px;
+    }
+
+    .navbar-links {
+        display: none;
+    }
+
+    .account-icon {
+        display: none;
+    }
+
+    .mobile-menu-button {
+        display: flex;
+    }
+
+    .mobile-menu {
+        display: flex;
+        flex-direction: column;
+
+        background: white;
+        border-top: 1px solid #eeeeee;
+        padding: 10px 20px 20px;
+    }
+
+    .mobile-menu a {
+        color: #111111;
+        text-decoration: none;
+
+        padding: 15px 0;
+        border-bottom: 1px solid #eeeeee;
+
+        font-size: 15px;
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 500px) {
+
+    .navbar-logo {
+        font-size: 19px;
+    }
+
+    .navbar-actions {
+        gap: 10px;
+    }
+
+    .search-button {
+        display: none;
+    }
+}
