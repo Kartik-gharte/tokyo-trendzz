@@ -24,7 +24,11 @@ export function CartProvider({ children }) {
                 ? JSON.parse(savedCart)
                 : [];
         } catch (error) {
-            console.error("Cart loading error:", error);
+            console.error(
+                "Cart loading error:",
+                error
+            );
+
             return [];
         }
     });
@@ -54,33 +58,39 @@ export function CartProvider({ children }) {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Failed to load cart"
+                    data.message ||
+                    "Failed to load cart"
                 );
             }
 
-            const formattedItems = data.items.map((item) => ({
-                cartItemId: item.cart_item_id,
-                productId: item.product_id,
-                variantId: item.variant_id,
+            const formattedItems = data.items.map(
+                (item) => ({
+                    cartItemId: item.cart_item_id,
+                    productId: item.product_id,
+                    variantId: item.variant_id,
 
-                name: item.name,
-                brand: item.brand,
+                    name: item.name,
+                    brand: item.brand,
 
-                image: item.image_url || "",
+                    image: item.image_url || "",
 
-                price: Number(
-                    item.discount_price || item.price
-                ),
+                    price: Number(
+                        item.discount_price ||
+                        item.price
+                    ),
 
-                originalPrice: Number(item.price),
+                    originalPrice: Number(
+                        item.price
+                    ),
 
-                size: item.size,
-                color: item.color,
+                    size: item.size,
+                    color: item.color,
 
-                stock: item.stock,
+                    stock: item.stock,
 
-                quantity: item.quantity
-            }));
+                    quantity: item.quantity
+                })
+            );
 
             setCartItems(formattedItems);
 
@@ -96,77 +106,94 @@ export function CartProvider({ children }) {
 
 
     // --------------------------------
+    // Merge guest cart into database
+    // --------------------------------
+
+    async function mergeGuestCart() {
+        if (!token) {
+            return;
+        }
+
+        try {
+            const savedCart =
+                localStorage.getItem(
+                    "tokyo_trendz_cart"
+                );
+
+            if (!savedCart) {
+                return;
+            }
+
+            const guestItems =
+                JSON.parse(savedCart);
+
+            if (
+                !Array.isArray(guestItems) ||
+                guestItems.length === 0
+            ) {
+                return;
+            }
+
+            for (const item of guestItems) {
+                if (
+                    !item.productId ||
+                    !item.variantId
+                ) {
+                    continue;
+                }
+
+                await fetch(API_URL, {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        Authorization:
+                            `Bearer ${token}`
+                    },
+
+                    body: JSON.stringify({
+                        productId:
+                            item.productId,
+
+                        variantId:
+                            item.variantId,
+
+                        quantity:
+                            item.quantity
+                    })
+                });
+            }
+
+            localStorage.removeItem(
+                "tokyo_trendz_cart"
+            );
+
+        } catch (error) {
+            console.error(
+                "Guest cart merge error:",
+                error
+            );
+        }
+    }
+
+
+    // --------------------------------
     // Load database cart when logged in
     // --------------------------------
 
-   useEffect(() => {
-    if (isAuthenticated && token) {
-        async function initializeCart() {
-            await mergeGuestCart();
-            await loadCart();
-        }
-
-        initializeCart();
-    }
-}, [isAuthenticated, token]);
-
-
-    // --------------------------------
-// Merge guest cart into database
-// --------------------------------
-
-async function mergeGuestCart() {
-    if (!token) {
-        return;
-    }
-
-    try {
-        const savedCart = localStorage.getItem(
-            "tokyo_trendz_cart"
-        );
-
-        if (!savedCart) {
-            return;
-        }
-
-        const guestItems = JSON.parse(savedCart);
-
-        if (!Array.isArray(guestItems) || guestItems.length === 0) {
-            return;
-        }
-
-        for (const item of guestItems) {
-            if (!item.productId || !item.variantId) {
-                continue;
+    useEffect(() => {
+        if (isAuthenticated && token) {
+            async function initializeCart() {
+                await mergeGuestCart();
+                await loadCart();
             }
 
-            await fetch(API_URL, {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-
-                body: JSON.stringify({
-                    productId: item.productId,
-                    variantId: item.variantId,
-                    quantity: item.quantity
-                })
-            });
+            initializeCart();
         }
+    }, [isAuthenticated, token]);
 
-        localStorage.removeItem(
-            "tokyo_trendz_cart"
-        );
-
-    } catch (error) {
-        console.error(
-            "Guest cart merge error:",
-            error
-        );
-    }
-}
 
     // --------------------------------
     // Save guest cart to localStorage
@@ -186,7 +213,11 @@ async function mergeGuestCart() {
     // Find product variant
     // --------------------------------
 
-    function findVariant(product, size, color) {
+    function findVariant(
+        product,
+        size,
+        color
+    ) {
         if (!product?.variants) {
             return null;
         }
@@ -210,12 +241,16 @@ async function mergeGuestCart() {
         quantity = 1
     ) {
         // Logged-in user
-        if (isAuthenticated && token) {
-            const variant = findVariant(
-                product,
-                size,
-                color
-            );
+        if (
+            isAuthenticated &&
+            token
+        ) {
+            const variant =
+                findVariant(
+                    product,
+                    size,
+                    color
+                );
 
             if (!variant) {
                 throw new Error(
@@ -223,26 +258,36 @@ async function mergeGuestCart() {
                 );
             }
 
-            const response = await fetch(API_URL, {
-                method: "POST",
+            const response =
+                await fetch(API_URL, {
+                    method: "POST",
 
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
+                    headers: {
+                        "Content-Type":
+                            "application/json",
 
-                body: JSON.stringify({
-                    productId: product.id,
-                    variantId: variant.id,
-                    quantity
-                })
-            });
+                        Authorization:
+                            `Bearer ${token}`
+                    },
 
-            const data = await response.json();
+                    body: JSON.stringify({
+                        productId:
+                            product.id,
+
+                        variantId:
+                            variant.id,
+
+                        quantity
+                    })
+                });
+
+            const data =
+                await response.json();
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Unable to add item to cart"
+                    data.message ||
+                    "Unable to add item to cart"
                 );
             }
 
@@ -253,68 +298,127 @@ async function mergeGuestCart() {
 
 
         // Guest user
-        setCartItems((currentItems) => {
-            const existingItem = currentItems.find(
-                (item) =>
-                    item.productId === product.id &&
-                    item.size === size &&
-                    item.color === color
-            );
 
-            if (existingItem) {
-                return currentItems.map((item) =>
-                    item.productId === product.id &&
-                        item.size === size &&
-                        item.color === color
-                        ? {
-                            ...item,
-                            quantity:
-                                item.quantity +
-                                quantity
-                        }
-                        : item
-                );
+        setCartItems(
+            (currentItems) => {
+                const existingItem =
+                    currentItems.find(
+                        (item) =>
+                            item.productId ===
+                                product.id &&
+                            item.size === size &&
+                            item.color === color
+                    );
+
+                if (existingItem) {
+                    return currentItems.map(
+                        (item) =>
+                            item.productId ===
+                                product.id &&
+                            item.size === size &&
+                            item.color === color
+                                ? {
+                                      ...item,
+                                      quantity:
+                                          item.quantity +
+                                          quantity
+                                  }
+                                : item
+                    );
+                }
+
+                const variant =
+                    findVariant(
+                        product,
+                        size,
+                        color
+                    );
+
+                const newItem = {
+                    cartItemId:
+                        `${product.id}-${size}-${color}-${Date.now()}`,
+
+                    productId:
+                        product.id,
+
+                    variantId:
+                        variant?.id ||
+                        null,
+
+                    name:
+                        product.name,
+
+                    brand:
+                        product.brand,
+
+                    image:
+                        product.images?.[0]
+                            ?.image_url ||
+                        "",
+
+                    price: Number(
+                        product.discount_price ||
+                        product.price
+                    ),
+
+                    originalPrice:
+                        Number(
+                            product.price
+                        ),
+
+                    size,
+                    color,
+
+                    quantity
+                };
+
+                return [
+                    ...currentItems,
+                    newItem
+                ];
             }
-            const variant = findVariant(
-                product,
-                size,
-                color
+        );
+    }
+
+
+    // --------------------------------
+    // Add existing variant to cart
+    // Used for Reorder
+    // --------------------------------
+
+    async function addExistingVariantToCart(
+        product,
+        variantId,
+        quantity = 1
+    ) {
+        if (
+            !product ||
+            !variantId
+        ) {
+            throw new Error(
+                "Product or variant information is missing"
+            );
+        }
+
+        const variant =
+            product.variants?.find(
+                (item) =>
+                    Number(item.id) ===
+                    Number(variantId)
             );
 
-            const newItem = {
-                cartItemId:
-                    `${product.id}-${size}-${color}-${Date.now()}`,
+        if (!variant) {
+            throw new Error(
+                "This product variant is no longer available"
+            );
+        }
 
-                productId: product.id,
-
-                variantId: variant?.id || null,
-
-                name: product.name,
-
-                brand: product.brand,
-
-                image:
-                    product.images?.[0]?.image_url ||
-                    "",
-
-                price: Number(
-                    product.discount_price ||
-                    product.price
-                ),
-
-                originalPrice: Number(product.price),
-
-                size,
-                color,
-
-                quantity
-            };
-
-            return [
-                ...currentItems,
-                newItem
-            ];
-        });
+        return await addToCart(
+            product,
+            variant.size,
+            variant.color,
+            quantity
+        );
     }
 
 
@@ -322,20 +426,28 @@ async function mergeGuestCart() {
     // Remove item
     // --------------------------------
 
-    async function removeFromCart(cartItemId) {
-        if (isAuthenticated && token) {
-            const response = await fetch(
-                `${API_URL}/${cartItemId}`,
-                {
-                    method: "DELETE",
+    async function removeFromCart(
+        cartItemId
+    ) {
+        if (
+            isAuthenticated &&
+            token
+        ) {
+            const response =
+                await fetch(
+                    `${API_URL}/${cartItemId}`,
+                    {
+                        method: "DELETE",
 
-                    headers: {
-                        Authorization: `Bearer ${token}`
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`
+                        }
                     }
-                }
-            );
+                );
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             if (!response.ok) {
                 throw new Error(
@@ -351,11 +463,14 @@ async function mergeGuestCart() {
 
 
         // Guest
-        setCartItems((currentItems) =>
-            currentItems.filter(
-                (item) =>
-                    item.cartItemId !== cartItemId
-            )
+
+        setCartItems(
+            (currentItems) =>
+                currentItems.filter(
+                    (item) =>
+                        item.cartItemId !==
+                        cartItemId
+                )
         );
     }
 
@@ -369,29 +484,39 @@ async function mergeGuestCart() {
         quantity
     ) {
         if (quantity < 1) {
-            await removeFromCart(cartItemId);
+            await removeFromCart(
+                cartItemId
+            );
+
             return;
         }
 
+        if (
+            isAuthenticated &&
+            token
+        ) {
+            const response =
+                await fetch(
+                    `${API_URL}/${cartItemId}`,
+                    {
+                        method: "PUT",
 
-        if (isAuthenticated && token) {
-            const response = await fetch(
-                `${API_URL}/${cartItemId}`,
-                {
-                    method: "PUT",
+                        headers: {
+                            "Content-Type":
+                                "application/json",
 
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                    },
+                            Authorization:
+                                `Bearer ${token}`
+                        },
 
-                    body: JSON.stringify({
-                        quantity
-                    })
-                }
-            );
+                        body: JSON.stringify({
+                            quantity
+                        })
+                    }
+                );
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             if (!response.ok) {
                 throw new Error(
@@ -407,15 +532,19 @@ async function mergeGuestCart() {
 
 
         // Guest
-        setCartItems((currentItems) =>
-            currentItems.map((item) =>
-                item.cartItemId === cartItemId
-                    ? {
-                        ...item,
-                        quantity
-                    }
-                    : item
-            )
+
+        setCartItems(
+            (currentItems) =>
+                currentItems.map(
+                    (item) =>
+                        item.cartItemId ===
+                        cartItemId
+                            ? {
+                                  ...item,
+                                  quantity
+                              }
+                            : item
+                )
         );
     }
 
@@ -425,16 +554,22 @@ async function mergeGuestCart() {
     // --------------------------------
 
     async function clearCart() {
-        if (isAuthenticated && token) {
-            const response = await fetch(API_URL, {
-                method: "DELETE",
+        if (
+            isAuthenticated &&
+            token
+        ) {
+            const response =
+                await fetch(API_URL, {
+                    method: "DELETE",
 
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                });
 
-            const data = await response.json();
+            const data =
+                await response.json();
 
             if (!response.ok) {
                 throw new Error(
@@ -450,6 +585,7 @@ async function mergeGuestCart() {
 
 
         // Guest
+
         setCartItems([]);
     }
 
@@ -458,27 +594,31 @@ async function mergeGuestCart() {
     // Cart calculations
     // --------------------------------
 
-    const cartCount = cartItems.reduce(
-        (total, item) =>
-            total + item.quantity,
-        0
-    );
+    const cartCount =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                item.quantity,
+            0
+        );
 
-    const cartTotal = cartItems.reduce(
-        (total, item) =>
-            total +
-            item.price *
-            item.quantity,
-        0
-    );
+    const cartTotal =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                item.price *
+                    item.quantity,
+            0
+        );
 
-    const cartOriginalTotal = cartItems.reduce(
-        (total, item) =>
-            total +
-            item.originalPrice *
-            item.quantity,
-        0
-    );
+    const cartOriginalTotal =
+        cartItems.reduce(
+            (total, item) =>
+                total +
+                item.originalPrice *
+                    item.quantity,
+            0
+        );
 
 
     // --------------------------------
@@ -498,6 +638,8 @@ async function mergeGuestCart() {
 
         addToCart,
 
+        addExistingVariantToCart,
+
         removeFromCart,
 
         updateQuantity,
@@ -507,7 +649,9 @@ async function mergeGuestCart() {
 
 
     return (
-        <CartContext.Provider value={value}>
+        <CartContext.Provider
+            value={value}
+        >
             {children}
         </CartContext.Provider>
     );
@@ -515,5 +659,7 @@ async function mergeGuestCart() {
 
 
 export function useCart() {
-    return useContext(CartContext);
+    return useContext(
+        CartContext
+    );
 }

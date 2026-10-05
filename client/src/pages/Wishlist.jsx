@@ -7,7 +7,6 @@ import {
 
 import { Link } from "react-router-dom";
 
-import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
 import "./Wishlist.css";
@@ -18,25 +17,11 @@ function Wishlist() {
         removeFromWishlist
     } = useWishlist();
 
-    const { addToCart } = useCart();
+    console.log("Wishlist Items:", wishlistItems);
 
     function handleAddToCart(product) {
-        const size =
-            product.gender === "women"
-                ? "M"
-                : "M";
-
-        const color = "Default";
-
-        addToCart(
-            product,
-            size,
-            color,
-            1
-        );
-
-        alert("Product added to cart!");
-    }
+    window.location.href = `/products/${product.product_id}`;
+}
 
     if (wishlistItems.length === 0) {
         return (
@@ -115,7 +100,7 @@ function Wishlist() {
 
                         <article
                             className="wishlist-card"
-                            key={product.id}
+                            key={product.product_id}
                         >
 
                             <div className="wishlist-image">
@@ -137,7 +122,7 @@ function Wishlist() {
                                     aria-label="Remove from wishlist"
                                     onClick={() =>
                                         removeFromWishlist(
-                                            product.id
+                                            product.product_id
                                         )
                                     }
                                 >
@@ -198,12 +183,11 @@ function Wishlist() {
                                             )
                                         }
                                     >
-                                        <ShoppingBag size={16} />
-                                        Add to Cart
+                                        <ShoppingBag size={16} /> Choose Options
                                     </button>
 
                                     <Link
-                                        to={`/products/${product.id}`}
+                                        to={`/products/${product.product_id}`}
                                         className="wishlist-view-button"
                                     >
                                         View

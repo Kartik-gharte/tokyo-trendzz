@@ -1,0 +1,253 @@
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #f7f7f7;
+}
+
+/* ==========================================
+   SIDEBAR
+========================================== */
+
+.admin-sidebar {
+    width: 250px;
+    min-height: 100vh;
+    background: #111;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+}
+
+/* ==========================================
+   LOGO
+========================================== */
+
+.admin-sidebar-logo {
+    padding: 28px 24px 24px;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-bottom: 1px solid #292929;
+}
+
+.admin-sidebar-logo span {
+    color: #aaa;
+}
+
+.admin-sidebar-logo small {
+    display: block;
+    margin-top: 7px;
+    color: #777;
+    font-size: 9px;
+    letter-spacing: 2px;
+    font-weight: 600;
+}
+
+/* ==========================================
+   ADMIN USER
+========================================== */
+
+.admin-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 20px;
+    border-bottom: 1px solid #292929;
+}
+
+.admin-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    color: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.admin-user-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.admin-user-info strong {
+    font-size: 13px;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-user-info span {
+    font-size: 11px;
+    color: #888;
+}
+
+/* ==========================================
+   NAVIGATION
+========================================== */
+
+.admin-sidebar-nav {
+    padding: 20px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.admin-sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    color: #aaa;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+.admin-sidebar-nav a:hover {
+    background: #1f1f1f;
+    color: #fff;
+}
+
+.admin-sidebar-nav a.active {
+    background: #fff;
+    color: #111;
+}
+
+.admin-sidebar-nav a.active:hover {
+    background: #fff;
+    color: #111;
+}
+
+/* ==========================================
+   BOTTOM ACTIONS
+========================================== */
+
+.admin-sidebar-bottom {
+    margin-top: auto;
+    padding: 15px 12px 20px;
+    border-top: 1px solid #292929;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.admin-sidebar-bottom a,
+.admin-logout-button {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #aaa;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: 0.2s ease;
+}
+
+.admin-sidebar-bottom a:hover,
+.admin-logout-button:hover {
+    background: #1f1f1f;
+    color: #fff;
+}
+
+/* ==========================================
+   MAIN CONTENT
+========================================== */
+
+.admin-main {
+    margin-left: 250px;
+    width: calc(100% - 250px);
+    min-height: 100vh;
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 800px) {
+
+    .admin-sidebar {
+        width: 210px;
+    }
+
+    .admin-main {
+        margin-left: 210px;
+        width: calc(100% - 210px);
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .admin-sidebar {
+        width: 70px;
+    }
+
+    .admin-sidebar-logo {
+        padding: 20px 10px;
+        text-align: center;
+        font-size: 0;
+    }
+
+    .admin-sidebar-logo::before {
+        content: "TT";
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .admin-sidebar-logo span,
+    .admin-sidebar-logo small {
+        display: none;
+    }
+
+    .admin-user {
+        justify-content: center;
+        padding: 15px 5px;
+    }
+
+    .admin-user-info {
+        display: none;
+    }
+
+    .admin-sidebar-nav {
+        padding: 15px 8px;
+    }
+
+    .admin-sidebar-nav a,
+    .admin-sidebar-bottom a,
+    .admin-logout-button {
+        justify-content: center;
+        padding: 12px 8px;
+    }
+
+    .admin-sidebar-nav span,
+    .admin-sidebar-bottom span {
+        display: none;
+    }
+
+    .admin-main {
+        margin-left: 70px;
+        width: calc(100% - 70px);
+    }
+}

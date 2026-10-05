@@ -9,9 +9,8 @@ import {
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
 import { useCart } from "../context/CartContext";
-
+import NotificationBell from "./NotificationBell";
 import "./Navbar.css";
 
 function Navbar() {
@@ -19,13 +18,17 @@ function Navbar() {
 
     const { cartCount } = useCart();
 
+    const user = JSON.parse(
+        localStorage.getItem("tokyo_trendz_user") || "null"
+    );
+
+    const isAdmin = user?.role === "admin";
+
     return (
         <header className="navbar">
-
             <div className="navbar-container">
 
                 {/* LOGO */}
-
                 <Link
                     to="/"
                     className="navbar-logo"
@@ -33,8 +36,8 @@ function Navbar() {
                     TOKYO<span>TRENDZ</span>
                 </Link>
 
-                {/* DESKTOP NAVIGATION */}
 
+                {/* DESKTOP NAVIGATION */}
                 <nav className="navbar-links">
 
                     <Link to="/">
@@ -57,10 +60,21 @@ function Navbar() {
                         New Arrivals
                     </Link>
 
+
+                    {/* ADMIN PANEL */}
+                    {isAdmin && (
+                        <Link
+                            to="/admin/dashboard"
+                            className="admin-nav-link"
+                        >
+                            Admin Panel
+                        </Link>
+                    )}
+
                 </nav>
 
-                {/* ACTIONS */}
 
+                {/* ACTIONS */}
                 <div className="navbar-actions">
 
                     <button
@@ -71,6 +85,7 @@ function Navbar() {
                         <Search size={21} />
                     </button>
 
+
                     <Link
                         to="/wishlist"
                         className="nav-icon"
@@ -79,6 +94,11 @@ function Navbar() {
                         <Heart size={21} />
                     </Link>
 
+
+                    {/* NOTIFICATIONS */}
+                    <NotificationBell />
+
+
                     <Link
                         to="/account"
                         className="nav-icon account-icon"
@@ -86,6 +106,7 @@ function Navbar() {
                     >
                         <User size={21} />
                     </Link>
+
 
                     <Link
                         to="/cart"
@@ -101,8 +122,8 @@ function Navbar() {
                         )}
                     </Link>
 
-                    {/* MOBILE MENU BUTTON */}
 
+                    {/* MOBILE MENU BUTTON */}
                     <button
                         className="mobile-menu-button"
                         type="button"
@@ -122,8 +143,8 @@ function Navbar() {
 
             </div>
 
-            {/* MOBILE MENU */}
 
+            {/* MOBILE MENU */}
             {mobileMenu && (
                 <div className="mobile-menu">
 
@@ -136,6 +157,7 @@ function Navbar() {
                         Home
                     </Link>
 
+
                     <Link
                         to="/products?gender=men"
                         onClick={() =>
@@ -144,6 +166,7 @@ function Navbar() {
                     >
                         Men
                     </Link>
+
 
                     <Link
                         to="/products?gender=women"
@@ -154,6 +177,7 @@ function Navbar() {
                         Women
                     </Link>
 
+
                     <Link
                         to="/products"
                         onClick={() =>
@@ -162,6 +186,7 @@ function Navbar() {
                     >
                         Collections
                     </Link>
+
 
                     <Link
                         to="/products"
@@ -172,6 +197,7 @@ function Navbar() {
                         New Arrivals
                     </Link>
 
+
                     <Link
                         to="/cart"
                         onClick={() =>
@@ -180,6 +206,20 @@ function Navbar() {
                     >
                         Cart ({cartCount})
                     </Link>
+
+
+                    {/* MOBILE ADMIN PANEL */}
+                    {isAdmin && (
+                        <Link
+                            to="/admin/dashboard"
+                            onClick={() =>
+                                setMobileMenu(false)
+                            }
+                            className="mobile-admin-link"
+                        >
+                            Admin Panel
+                        </Link>
+                    )}
 
                 </div>
             )}

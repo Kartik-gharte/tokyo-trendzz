@@ -1,0 +1,716 @@
+/* ==========================================
+   ADMIN ADDRESSES PAGE
+========================================== */
+
+.admin-addresses-page {
+    width: 100%;
+}
+
+
+/* ==========================================
+   STATS
+========================================== */
+
+.admin-address-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.admin-address-stat-card {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.admin-address-stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #111111;
+}
+
+.admin-address-stat-card span {
+    display: block;
+    font-size: 13px;
+    color: #777777;
+    margin-bottom: 4px;
+}
+
+.admin-address-stat-card strong {
+    display: block;
+    font-size: 23px;
+    color: #111111;
+}
+
+
+/* ==========================================
+   TOOLBAR
+========================================== */
+
+.admin-addresses-toolbar {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.admin-address-count {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: #777777;
+    font-size: 14px;
+}
+
+.admin-address-count strong {
+    color: #111111;
+    font-size: 18px;
+}
+
+.admin-address-search {
+    width: 320px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    border: 1px solid #dddddd;
+    border-radius: 9px;
+
+    padding: 0 13px;
+
+    background: #ffffff;
+}
+
+.admin-address-search svg {
+    color: #777777;
+    flex-shrink: 0;
+}
+
+.admin-address-search input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 14px;
+    color: #111111;
+}
+
+.admin-address-search input::placeholder {
+    color: #999999;
+}
+
+
+/* ==========================================
+   TABLE
+========================================== */
+
+.admin-addresses-table-wrapper {
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+
+    overflow-x: auto;
+}
+
+.admin-addresses-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+}
+
+.admin-addresses-table th {
+    background: #fafafa;
+    border-bottom: 1px solid #e5e5e5;
+
+    padding: 15px 18px;
+
+    text-align: left;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    color: #777777;
+}
+
+.admin-addresses-table td {
+    padding: 17px 18px;
+    border-bottom: 1px solid #eeeeee;
+
+    font-size: 14px;
+    color: #333333;
+
+    vertical-align: middle;
+}
+
+.admin-addresses-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-addresses-table tbody tr:hover {
+    background: #fafafa;
+}
+
+
+/* ==========================================
+   CUSTOMER
+========================================== */
+
+.admin-address-customer {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 190px;
+}
+
+.admin-address-avatar {
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    background: #111111;
+    color: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    flex-shrink: 0;
+}
+
+.admin-address-customer div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.admin-address-customer strong {
+    color: #111111;
+    font-size: 14px;
+}
+
+.admin-address-customer span {
+    color: #888888;
+    font-size: 12px;
+}
+
+
+/* ==========================================
+   ADDRESS INFO
+========================================== */
+
+.admin-address-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    max-width: 310px;
+}
+
+.admin-address-info strong {
+    color: #111111;
+    font-size: 13px;
+}
+
+.admin-address-info span {
+    color: #777777;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================
+   PHONE
+========================================== */
+
+.admin-address-phone {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    white-space: nowrap;
+
+    color: #555555;
+}
+
+.admin-address-phone svg {
+    color: #888888;
+}
+
+
+/* ==========================================
+   ADDRESS TYPE
+========================================== */
+
+.admin-address-default {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    background: #f0f0f0;
+    color: #111111;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.admin-address-normal {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 6px 10px;
+
+    border-radius: 20px;
+
+    background: #f7f7f7;
+    color: #777777;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+
+/* ==========================================
+   ACTIONS
+========================================== */
+
+.admin-address-actions {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.admin-address-actions button {
+    width: 36px;
+    height: 36px;
+
+    border-radius: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: 0.2s ease;
+}
+
+.admin-address-view {
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    color: #333333;
+}
+
+.admin-address-view:hover {
+    background: #111111;
+    color: #ffffff;
+    border-color: #111111;
+}
+
+.admin-address-delete {
+    border: 1px solid #eeeeee;
+    background: #ffffff;
+    color: #777777;
+}
+
+.admin-address-delete:hover {
+    background: #111111;
+    color: #ffffff;
+    border-color: #111111;
+}
+
+
+/* ==========================================
+   LOADING / ERROR
+========================================== */
+
+.admin-address-state {
+    min-height: 250px;
+
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #777777;
+    font-size: 15px;
+}
+
+.admin-address-state.error {
+    color: #b00020;
+}
+
+
+/* ==========================================
+   EMPTY STATE
+========================================== */
+
+.admin-address-empty {
+    min-height: 300px;
+
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 14px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    padding: 30px;
+}
+
+.admin-address-empty-icon {
+    width: 68px;
+    height: 68px;
+
+    border-radius: 50%;
+
+    background: #f4f4f4;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #555555;
+
+    margin-bottom: 16px;
+}
+
+.admin-address-empty h2 {
+    margin: 0 0 7px;
+    font-size: 20px;
+    color: #111111;
+}
+
+.admin-address-empty p {
+    margin: 0;
+    color: #888888;
+    font-size: 14px;
+}
+
+
+/* ==========================================
+   MODAL OVERLAY
+========================================== */
+
+.admin-address-modal-overlay {
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.55);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    z-index: 1000;
+}
+
+
+/* ==========================================
+   MODAL
+========================================== */
+
+.admin-address-modal {
+    width: 100%;
+    max-width: 650px;
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: #ffffff;
+
+    border-radius: 16px;
+
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+
+/* ==========================================
+   MODAL HEADER
+========================================== */
+
+.admin-address-modal-header {
+    padding: 22px 24px;
+
+    border-bottom: 1px solid #eeeeee;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.admin-address-modal-header h2 {
+    margin: 0 0 5px;
+
+    font-size: 21px;
+    color: #111111;
+}
+
+.admin-address-modal-header p {
+    margin: 0;
+
+    font-size: 13px;
+    color: #888888;
+}
+
+.admin-address-modal-header button {
+    width: 36px;
+    height: 36px;
+
+    border: none;
+    border-radius: 8px;
+
+    background: #f5f5f5;
+    color: #555555;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+}
+
+.admin-address-modal-header button:hover {
+    background: #111111;
+    color: #ffffff;
+}
+
+
+/* ==========================================
+   MODAL LOADING
+========================================== */
+
+.admin-address-modal-loading {
+    padding: 60px 20px;
+
+    text-align: center;
+
+    color: #777777;
+    font-size: 14px;
+}
+
+
+/* ==========================================
+   DETAIL PROFILE
+========================================== */
+
+.admin-address-detail-profile {
+    padding: 24px;
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    border-bottom: 1px solid #eeeeee;
+}
+
+.admin-address-detail-avatar {
+    width: 54px;
+    height: 54px;
+
+    border-radius: 50%;
+
+    background: #111111;
+    color: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.admin-address-detail-profile h3 {
+    margin: 0 0 4px;
+
+    color: #111111;
+    font-size: 17px;
+}
+
+.admin-address-detail-profile p {
+    margin: 0;
+
+    color: #888888;
+    font-size: 13px;
+}
+
+
+/* ==========================================
+   DETAIL GRID
+========================================== */
+
+.admin-address-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+
+    background: #eeeeee;
+
+    border-bottom: 1px solid #eeeeee;
+}
+
+.admin-address-detail-grid > div {
+    background: #ffffff;
+
+    padding: 17px 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.admin-address-detail-grid span {
+    color: #888888;
+    font-size: 12px;
+}
+
+.admin-address-detail-grid strong {
+    color: #222222;
+    font-size: 14px;
+}
+
+
+/* ==========================================
+   COMPLETE ADDRESS
+========================================== */
+
+.admin-address-full {
+    padding: 20px 24px;
+}
+
+.admin-address-full > span {
+    display: block;
+
+    color: #888888;
+    font-size: 12px;
+
+    margin-bottom: 8px;
+}
+
+.admin-address-full p {
+    margin: 0;
+
+    color: #333333;
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+/* ==========================================
+   DEFAULT ADDRESS MESSAGE
+========================================== */
+
+.admin-address-detail-default {
+    margin: 0 24px 24px;
+
+    padding: 11px 13px;
+
+    border-radius: 8px;
+
+    background: #f5f5f5;
+
+    color: #555555;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    font-size: 13px;
+}
+
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 900px) {
+
+    .admin-address-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-addresses-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-address-search {
+        width: 100%;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .admin-address-modal {
+        max-height: 95vh;
+        border-radius: 12px;
+    }
+
+    .admin-address-modal-header {
+        padding: 18px;
+    }
+
+    .admin-address-detail-profile {
+        padding: 18px;
+    }
+
+    .admin-address-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-address-full {
+        padding: 18px;
+    }
+
+    .admin-address-detail-default {
+        margin: 0 18px 18px;
+    }
+
+}

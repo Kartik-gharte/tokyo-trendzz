@@ -3,14 +3,19 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import { getProducts } from "../services/productService";
+import { useWishlist } from "../context/WishlistContext";
 
 import "./Home.css";
 
 function Home() {
-
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const {
+        toggleWishlist,
+        isInWishlist
+    } = useWishlist();
 
     useEffect(() => {
         loadProducts();
@@ -26,6 +31,14 @@ function Home() {
             setError("Unable to load products.");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleWishlist(product) {
+        try {
+            await toggleWishlist(product);
+        } catch (error) {
+            console.error("Wishlist error:", error);
         }
     }
 
@@ -75,7 +88,6 @@ function Home() {
                     </div>
 
                 </div>
-
 
                 <div className="hero-visual">
 
@@ -247,94 +259,119 @@ function Home() {
                 {!loading && !error && (
                     <div className="home-product-grid">
 
-                        {products.map((product) => (
+                        {products.map((product) => {
 
-                            <article
-                                className="home-product-card"
-                                key={product.id}
-                            >
+                            const liked = isInWishlist(product.id);
 
-                                <div className="home-product-image">
+                            return (
+                                <article
+                                    className="home-product-card"
+                                    key={product.id}
+                                >
 
-                                    {product.image_url ? (
-                                        <img
-                                            src={product.image_url}
-                                            alt={product.name}
-                                        />
-                                    ) : (
-                                        <div className="no-product-image">
-                                            TT
-                                        </div>
-                                    )}
+                                    <div className="home-product-image">
 
-
-                                    {product.discount_price && (
-                                        <span className="product-sale-badge">
-                                            SALE
-                                        </span>
-                                    )}
-
-
-                                    <button
-                                        className="product-wishlist"
-                                        type="button"
-                                    >
-                                        <Heart size={18} />
-                                    </button>
-
-                                </div>
-
-
-                                <div className="home-product-info">
-
-                                    <p className="product-brand">
-                                        {product.brand}
-                                    </p>
-
-                                    <h3>
-                                        {product.name}
-                                    </h3>
-
-                                    <div className="product-price">
-
-                                        {product.discount_price ? (
-                                            <>
-                                                <span className="sale-price">
-                                                    ₹{Number(
-                                                        product.discount_price
-                                                    ).toLocaleString("en-IN")}
-                                                </span>
-
-                                                <span className="original-price">
-                                                    ₹{Number(
-                                                        product.price
-                                                    ).toLocaleString("en-IN")}
-                                                </span>
-                                            </>
+                                        {product.image_url ? (
+                                            <img
+                                                src={product.image_url}
+                                                alt={product.name}
+                                            />
                                         ) : (
-                                            <span className="sale-price">
-                                                ₹{Number(
-                                                    product.price
-                                                ).toLocaleString("en-IN")}
+                                            <div className="no-product-image">
+                                                TT
+                                            </div>
+                                        )}
+
+
+                                        {product.discount_price && (
+                                            <span className="product-sale-badge">
+                                                SALE
                                             </span>
                                         )}
+
+
+                                        <button
+                                            className={`product-wishlist ${
+                                                liked ? "active" : ""
+                                            }`}
+                                            type="button"
+                                            aria-label={
+                                                liked
+                                                    ? "Remove from wishlist"
+                                                    : "Add to wishlist"
+                                            }
+                                            title={
+                                                liked
+                                                    ? "Remove from wishlist"
+                                                    : "Add to wishlist"
+                                            }
+                                            onClick={() =>
+                                                handleWishlist(product)
+                                            }
+                                        >
+                                            <Heart
+                                                size={18}
+                                                fill={
+                                                    liked
+                                                        ? "currentColor"
+                                                        : "none"
+                                                }
+                                            />
+                                        </button>
 
                                     </div>
 
 
-                                    <Link
-                                        to={`/products/${product.id}`}
-                                        className="product-view-button"
-                                    >
-                                        <ShoppingBag size={16} />
-                                        View Product
-                                    </Link>
+                                    <div className="home-product-info">
 
-                                </div>
+                                        <p className="product-brand">
+                                            {product.brand}
+                                        </p>
 
-                            </article>
+                                        <h3>
+                                            {product.name}
+                                        </h3>
 
-                        ))}
+                                        <div className="product-price">
+
+                                            {product.discount_price ? (
+                                                <>
+                                                    <span className="sale-price">
+                                                        ₹{Number(
+                                                            product.discount_price
+                                                        ).toLocaleString("en-IN")}
+                                                    </span>
+
+                                                    <span className="original-price">
+                                                        ₹{Number(
+                                                            product.price
+                                                        ).toLocaleString("en-IN")}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="sale-price">
+                                                    ₹{Number(
+                                                        product.price
+                                                    ).toLocaleString("en-IN")}
+                                                </span>
+                                            )}
+
+                                        </div>
+
+
+                                        <Link
+                                            to={`/products/${product.id}`}
+                                            className="product-view-button"
+                                        >
+                                            <ShoppingBag size={16} />
+                                            View Product
+                                        </Link>
+
+                                    </div>
+
+                                </article>
+                            );
+                        })}
 
                     </div>
                 )}

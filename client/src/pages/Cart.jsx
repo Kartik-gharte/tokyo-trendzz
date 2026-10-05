@@ -214,16 +214,16 @@ function Cart() {
 
                                 {item.originalPrice >
                                     item.price && (
-                                    <span>
-                                        ₹
-                                        {(
-                                            item.originalPrice *
-                                            item.quantity
-                                        ).toLocaleString(
-                                            "en-IN"
-                                        )}
-                                    </span>
-                                )}
+                                        <span>
+                                            ₹
+                                            {(
+                                                item.originalPrice *
+                                                item.quantity
+                                            ).toLocaleString(
+                                                "en-IN"
+                                            )}
+                                        </span>
+                                    )}
 
                             </div>
 
@@ -295,13 +295,12 @@ function Cart() {
                         </strong>
                     </div>
 
-                    <button
-                        type="button"
+                    <Link
+                        to="/checkout"
                         className="checkout-button"
                     >
                         Proceed to Checkout
-                    </button>
-
+                    </Link>
                     <Link
                         to="/products"
                         className="continue-shopping-link"

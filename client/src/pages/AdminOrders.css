@@ -1,0 +1,119 @@
+.admin-orders-page {
+    min-height: 100vh;
+    padding: 40px;
+    background: #f7f7f7;
+}
+
+.admin-orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.admin-orders-header h1 {
+    margin: 0;
+    font-size: 32px;
+    color: #111;
+}
+
+.admin-orders-header p {
+    margin: 8px 0 0;
+    color: #666;
+}
+
+.admin-orders-count {
+    background: #111;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.admin-orders-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.admin-orders-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+}
+
+.admin-orders-table th,
+.admin-orders-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.admin-orders-table th {
+    background: #111;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.admin-orders-table td {
+    color: #333;
+    font-size: 14px;
+}
+
+.admin-orders-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.admin-orders-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-orders-message {
+    text-align: center;
+    margin-top: 80px;
+    color: #666;
+    font-size: 18px;
+}
+
+.admin-orders-error {
+    text-align: center;
+    margin-top: 80px;
+    color: #d32f2f;
+    font-size: 18px;
+}
+
+.admin-orders-empty {
+    background: #fff;
+    padding: 60px 30px;
+    text-align: center;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.admin-orders-empty h2 {
+    margin-bottom: 10px;
+    color: #111;
+}
+
+.admin-orders-empty p {
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .admin-orders-page {
+        padding: 20px;
+    }
+
+    .admin-orders-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .admin-orders-header h1 {
+        font-size: 26px;
+    }
+}

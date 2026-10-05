@@ -105,9 +105,9 @@ async function login(req, res) {
         }
 
         const sql = `
-            SELECT id, name, email, password
-            FROM users
-            WHERE email = ?
+            SELECT id, name, email, password, role
+FROM users
+WHERE email = ?
         `;
 
         db.query(sql, [email], async (err, results) => {
@@ -144,7 +144,8 @@ async function login(req, res) {
             const token = jwt.sign(
                 {
                     userId: user.id,
-                    email: user.email
+                    email: user.email,
+                    role: user.role
                 },
                 process.env.JWT_SECRET,
                 {
@@ -159,7 +160,8 @@ async function login(req, res) {
                 user: {
                     id: user.id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    role: user.role
                 }
             });
         });

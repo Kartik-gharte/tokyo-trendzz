@@ -1,3 +1,4 @@
+
 .account-page {
     min-height: calc(100vh - 70px);
     background: #f8f8f8;
@@ -9,6 +10,10 @@
     max-width: 900px;
     margin: 0 auto;
 }
+
+/* ============================= */
+/* Account Header */
+/* ============================= */
 
 .account-header {
     display: flex;
@@ -42,6 +47,10 @@
     color: #777777;
 }
 
+/* ============================= */
+/* Account Information */
+/* ============================= */
+
 .account-info {
     background: #ffffff;
     padding: 30px;
@@ -74,6 +83,10 @@
 .account-detail strong {
     color: #111111;
 }
+
+/* ============================= */
+/* Account Options */
+/* ============================= */
 
 .account-options {
     display: grid;
@@ -111,6 +124,112 @@
     font-size: 13px;
 }
 
+/* ============================= */
+/* My Orders */
+/* ============================= */
+
+#my-orders {
+    scroll-margin-top: 90px;
+}
+
+#my-orders h2 {
+    margin-bottom: 20px;
+}
+
+#my-orders > p {
+    margin: 0;
+    padding: 20px 0;
+    color: #777777;
+}
+
+#my-orders > div {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Order Card */
+
+#my-orders .account-detail {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 22px;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    background: #fafafa;
+    transition: 0.2s ease;
+}
+
+#my-orders .account-detail:hover {
+    background: #ffffff;
+    border-color: #cccccc;
+    transform: translateY(-1px);
+}
+
+/* Left side */
+
+#my-orders .account-detail > div:first-child {
+    flex: 1;
+}
+
+#my-orders .account-detail > div:first-child > strong {
+    display: block;
+    margin-bottom: 10px;
+    color: #111111;
+    font-size: 16px;
+}
+
+/* Order information */
+
+#my-orders .account-detail p {
+    margin: 6px 0;
+    color: #777777;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Product line */
+
+#my-orders .account-detail > div:first-child p:last-child {
+    margin-top: 12px;
+    color: #333333;
+    font-weight: 500;
+}
+
+/* Right side */
+
+#my-orders .account-detail > div:last-child {
+    min-width: 130px;
+    text-align: right;
+}
+
+#my-orders .account-detail > div:last-child strong {
+    display: block;
+    color: #111111;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+/* Order status */
+
+#my-orders .account-detail > div:last-child p {
+    display: inline-block;
+    margin: 0;
+    padding: 5px 11px;
+    border-radius: 20px;
+    background: #eaf7ee;
+    color: #218838;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* ============================= */
+/* Logout */
+/* ============================= */
+
 .account-logout {
     width: 100%;
     display: flex;
@@ -132,6 +251,10 @@
     color: #ffffff;
 }
 
+/* ============================= */
+/* Mobile */
+/* ============================= */
+
 @media (max-width: 700px) {
     .account-options {
         grid-template-columns: 1fr;
@@ -149,4 +272,47 @@
         flex-direction: column;
         gap: 5px;
     }
+
+    #my-orders .account-detail {
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    #my-orders .account-detail > div:last-child {
+        min-width: unset;
+        width: 100%;
+        text-align: left;
+    }
+
+    #my-orders .account-detail > div:last-child strong {
+        font-size: 17px;
+    }
+}
+
+/* View Order Details Button */
+.order-view-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 14px;
+    padding: 9px 14px;
+    background: #111111;
+    color: #ffffff;
+    text-decoration: none;
+    border: 1px solid #111111;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.order-view-button:hover {
+    background: #ffffff;
+    color: #111111;
+}
+
+/* Cancelled Order Status */
+#my-orders .order-status-cancelled {
+    background: #fdecec;
+    color: #c62828;
 }
