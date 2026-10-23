@@ -504,8 +504,15 @@ async function verifyRazorpayPayment(req, res) {
     let connection;
 
     try {
-        connection = await db.promise().getConnection();
-
+connection = await new Promise((resolve, reject) => {
+    db.getConnection((error, connection) => {
+        if (error) {
+            reject(error);
+        } else {
+            resolve(connection);
+        }
+    });
+});
         await beginTransaction(connection);
 
         /*
