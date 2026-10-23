@@ -493,10 +493,19 @@ async function verifyRazorpayPayment(req, res) {
     STEP 3: Begin database transaction.
     */
 
-    const connection = db;
+    /*
+STEP 3: Begin database transaction.
 
-    try {
-        await beginTransaction(connection);
+db is a MySQL connection pool, so obtain a dedicated
+connection for the transaction and release it afterward.
+*/
+
+let connection;
+
+try {
+    connection = await db.promise().getConnection();
+
+    await beginTransaction(connection);
 
         /*
         STEP 4: Idempotency check.
@@ -947,15 +956,25 @@ async function verifyRazorpayPayment(req, res) {
                 razorpayPaymentId: razorpay_payment_id
             }
         });
-    } catch (error) {
-        console.error("Payment verification/order creation error:", error);
+        } catch (error) {
+        console.error(
+            "Payment verification/order creation error:",
+            error
+        );
 
-        await rollbackTransaction(connection);
+        if (connection) {
+            await rollbackTransaction(connection);
+        }
 
         return res.status(500).json({
             success: false,
-            message: "Unable to complete payment verification and order creation"
+            message:
+                "Unable to complete payment verification and order creation"
         });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }
 
