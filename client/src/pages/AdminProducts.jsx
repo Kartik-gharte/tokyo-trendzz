@@ -3,6 +3,7 @@ import "./AdminProducts.css";
 
 function AdminProducts() {
     const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -10,6 +11,9 @@ function AdminProducts() {
     const [showForm, setShowForm] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [editingProductId, setEditingProductId] = useState(null);
+
+    // Discount percentage for UI
+    const [discountPercent, setDiscountPercent] = useState("");
 
     // Image manager
     const [showImageManager, setShowImageManager] = useState(false);
@@ -54,6 +58,7 @@ function AdminProducts() {
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories();
     }, []);
 
     // =========================
@@ -72,7 +77,7 @@ function AdminProducts() {
             }
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/products",
+                "/api/admin/products",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -98,11 +103,95 @@ function AdminProducts() {
     }
 
     // =========================
+    // FETCH CATEGORIES
+    // =========================
+
+    async function fetchCategories() {
+        try {
+            const token = localStorage.getItem("tokyo_trendz_token");
+
+            if (!token) {
+                throw new Error("Please log in as an admin.");
+            }
+
+            const response = await fetch(
+                "/api/admin/categories",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(
+                    data.message || "Failed to fetch categories"
+                );
+            }
+
+            setCategories(data.categories || []);
+        } catch (error) {
+            console.error("Fetch categories error:", error);
+
+            setCategories([]);
+
+            setError(
+                error.message || "Failed to fetch categories"
+            );
+        }
+    }
+
+    // =========================
+    // GET CATEGORY NAME
+    // =========================
+
+    function getCategoryName(categoryId) {
+        const category = categories.find(
+            (item) =>
+                Number(item.id) === Number(categoryId)
+        );
+
+        return category?.name || "Uncategorized";
+    }
+
+    // =========================
     // FORMAT PRICE
     // =========================
 
     function formatPrice(price) {
-        return `₹${Number(price || 0).toLocaleString("en-IN")}`;
+        return `₹${Number(price || 0).toLocaleString(
+            "en-IN",
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        )}`;
+    }
+
+    // =========================
+    // CALCULATE DISCOUNT PRICE
+    // =========================
+
+    function calculateDiscountPrice(price, discount) {
+        const numericPrice = Number(price);
+        const numericDiscount = Number(discount);
+
+        if (
+            !numericPrice ||
+            numericPrice <= 0 ||
+            !Number.isFinite(numericDiscount) ||
+            numericDiscount <= 0
+        ) {
+            return "";
+        }
+
+        const finalPrice =
+            numericPrice -
+            (numericPrice * numericDiscount) / 100;
+
+        return Math.max(finalPrice, 0).toFixed(2);
     }
 
     // =========================
@@ -112,9 +201,70 @@ function AdminProducts() {
     function handleInputChange(event) {
         const { name, value, type, checked } = event.target;
 
+        setFormData((previous) => {
+            const updatedForm = {
+                ...previous,
+                [name]:
+                    type === "checkbox"
+                        ? checked
+                        : value
+            };
+
+            // If price changes, recalculate discounted price
+            if (name === "price") {
+                updatedForm.discount_price =
+                    calculateDiscountPrice(
+                        value,
+                        discountPercent
+                    );
+            }
+
+            return updatedForm;
+        });
+    }
+
+    // =========================
+    // DISCOUNT INPUT
+    // =========================
+
+    function handleDiscountChange(event) {
+        let value = event.target.value;
+
+        if (value === "") {
+            setDiscountPercent("");
+            setFormData((previous) => ({
+                ...previous,
+                discount_price: ""
+            }));
+            return;
+        }
+
+        let numericValue = Number(value);
+
+        if (!Number.isFinite(numericValue)) {
+            return;
+        }
+
+        // Keep discount between 0 and 100
+        if (numericValue < 0) {
+            numericValue = 0;
+        }
+
+        if (numericValue > 100) {
+            numericValue = 100;
+        }
+
+        setDiscountPercent(String(numericValue));
+
         setFormData((previous) => ({
             ...previous,
-            [name]: type === "checkbox" ? checked : value
+            discount_price:
+                numericValue === 0
+                    ? ""
+                    : calculateDiscountPrice(
+                          previous.price,
+                          numericValue
+                      )
         }));
     }
 
@@ -125,6 +275,8 @@ function AdminProducts() {
     function handleAddProduct() {
         setEditMode(false);
         setEditingProductId(null);
+
+        setDiscountPercent("");
 
         setFormData({
             name: "",
@@ -150,13 +302,34 @@ function AdminProducts() {
         setEditMode(true);
         setEditingProductId(product.id);
 
+        const price = Number(product.price || 0);
+        const discountPrice = Number(
+            product.discount_price || 0
+        );
+
+        let calculatedDiscount = "";
+
+        if (
+            price > 0 &&
+            discountPrice > 0 &&
+            discountPrice < price
+        ) {
+            calculatedDiscount = (
+                ((price - discountPrice) / price) *
+                100
+            ).toFixed(2);
+        }
+
+        setDiscountPercent(calculatedDiscount);
+
         setFormData({
             name: product.name || "",
             category_id: product.category_id || "",
             brand: product.brand || "",
             material: product.material || "",
             price: product.price || "",
-            discount_price: product.discount_price || "",
+            discount_price:
+                product.discount_price || "",
             gender: product.gender || "",
             description: product.description || "",
             is_featured: Boolean(product.is_featured),
@@ -174,6 +347,7 @@ function AdminProducts() {
         setShowForm(false);
         setEditMode(false);
         setEditingProductId(null);
+        setDiscountPercent("");
 
         setFormData({
             name: "",
@@ -196,18 +370,48 @@ function AdminProducts() {
     async function handleSubmit(event) {
         event.preventDefault();
 
-        const isEditing = Boolean(editMode && editingProductId);
+        const isEditing = Boolean(
+            editMode && editingProductId
+        );
+
+        if (!formData.category_id) {
+            alert("Please select a category.");
+            return;
+        }
+
+        if (
+            !formData.price ||
+            Number(formData.price) <= 0
+        ) {
+            alert("Please enter a valid product price.");
+            return;
+        }
+
+        if (
+            discountPercent !== "" &&
+            (Number(discountPercent) < 0 ||
+                Number(discountPercent) > 100)
+        ) {
+            alert(
+                "Discount percentage must be between 0% and 100%."
+            );
+            return;
+        }
 
         try {
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const url = isEditing
-                ? `http://localhost:5000/api/admin/products/${editingProductId}`
-                : "http://localhost:5000/api/admin/products";
+                ? `/api/admin/products/${editingProductId}`
+                : "/api/admin/products";
 
             const method = isEditing ? "PUT" : "POST";
 
@@ -219,17 +423,28 @@ function AdminProducts() {
                 },
                 body: JSON.stringify({
                     name: formData.name,
-                    category_id: formData.category_id,
+
+                    // Send actual category ID to backend
+                    category_id: Number(
+                        formData.category_id
+                    ),
+
                     brand: formData.brand,
                     material: formData.material,
-                    price: formData.price,
+                    price: Number(formData.price),
+
+                    // Backend still receives discounted final price
                     discount_price:
                         formData.discount_price === ""
                             ? null
-                            : formData.discount_price,
+                            : Number(
+                                  formData.discount_price
+                              ),
+
                     gender: formData.gender,
                     description: formData.description,
-                    is_featured: formData.is_featured,
+                    is_featured:
+                        formData.is_featured,
                     is_active: formData.is_active
                 })
             });
@@ -254,7 +469,10 @@ function AdminProducts() {
             handleCancelForm();
             await fetchProducts();
         } catch (error) {
-            console.error("Submit product error:", error);
+            console.error(
+                "Submit product error:",
+                error
+            );
 
             alert(
                 error.message ||
@@ -279,14 +497,18 @@ function AdminProducts() {
         }
 
         try {
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/products/${productId}`,
+                `/api/admin/products/${productId}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -299,18 +521,25 @@ function AdminProducts() {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Failed to delete product"
+                    data.message ||
+                        "Failed to delete product"
                 );
             }
 
-            alert("Product deleted successfully");
+            alert(
+                "Product deleted successfully"
+            );
 
             await fetchProducts();
         } catch (error) {
-            console.error("Delete product error:", error);
+            console.error(
+                "Delete product error:",
+                error
+            );
 
             alert(
-                error.message || "Failed to delete product"
+                error.message ||
+                    "Failed to delete product"
             );
         }
     }
@@ -323,14 +552,18 @@ function AdminProducts() {
         try {
             setImageLoading(true);
 
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/product-images/${productId}`,
+                `/api/admin/product-images/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -342,16 +575,21 @@ function AdminProducts() {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Failed to fetch product images"
+                    data.message ||
+                        "Failed to fetch product images"
                 );
             }
 
             setProductImages(data.images || []);
         } catch (error) {
-            console.error("Fetch product images error:", error);
+            console.error(
+                "Fetch product images error:",
+                error
+            );
 
             alert(
-                error.message || "Failed to fetch product images"
+                error.message ||
+                    "Failed to fetch product images"
             );
         } finally {
             setImageLoading(false);
@@ -379,29 +617,40 @@ function AdminProducts() {
             }
 
             if (!imageUrl.trim()) {
-                alert("Please enter an image URL.");
+                alert(
+                    "Please enter an image URL."
+                );
                 return;
             }
 
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/product-images",
+                "/api/admin/product-images",
                 {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type":
+                            "application/json",
                         Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        product_id: selectedProduct.id,
-                        image_url: imageUrl.trim(),
-                        is_primary: imagePrimary,
-                        display_order: Number(imageOrder) || 0
+                        product_id:
+                            selectedProduct.id,
+                        image_url:
+                            imageUrl.trim(),
+                        is_primary:
+                            imagePrimary,
+                        display_order:
+                            Number(imageOrder) || 0
                     })
                 }
             );
@@ -410,23 +659,33 @@ function AdminProducts() {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Failed to add product image"
+                    data.message ||
+                        "Failed to add product image"
                 );
             }
 
-            alert("Product image added successfully");
+            alert(
+                "Product image added successfully"
+            );
 
             setImageUrl("");
             setImagePrimary(false);
             setImageOrder(0);
 
-            await fetchProductImages(selectedProduct.id);
+            await fetchProductImages(
+                selectedProduct.id
+            );
+
             await fetchProducts();
         } catch (error) {
-            console.error("Add product image error:", error);
+            console.error(
+                "Add product image error:",
+                error
+            );
 
             alert(
-                error.message || "Failed to add product image"
+                error.message ||
+                    "Failed to add product image"
             );
         }
     }
@@ -441,14 +700,18 @@ function AdminProducts() {
         }
 
         try {
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/product-images/${imageId}`,
+                `/api/admin/product-images/${imageId}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -461,35 +724,51 @@ function AdminProducts() {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Failed to delete image"
+                    data.message ||
+                        "Failed to delete image"
                 );
             }
 
-            alert("Product image deleted successfully");
+            alert(
+                "Product image deleted successfully"
+            );
 
             if (selectedProduct) {
-                await fetchProductImages(selectedProduct.id);
+                await fetchProductImages(
+                    selectedProduct.id
+                );
+
                 await fetchProducts();
             }
         } catch (error) {
-            console.error("Delete product image error:", error);
+            console.error(
+                "Delete product image error:",
+                error
+            );
 
             alert(
-                error.message || "Failed to delete product image"
+                error.message ||
+                    "Failed to delete product image"
             );
         }
     }
 
-    async function handleSetPrimaryImage(imageId) {
+    async function handleSetPrimaryImage(
+        imageId
+    ) {
         try {
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/product-images/${imageId}/primary`,
+                `/api/admin/product-images/${imageId}/primary`,
                 {
                     method: "PATCH",
                     headers: {
@@ -502,18 +781,27 @@ function AdminProducts() {
 
             if (!response.ok) {
                 throw new Error(
-                    data.message || "Failed to set primary image"
+                    data.message ||
+                        "Failed to set primary image"
                 );
             }
 
-            alert("Primary image updated successfully");
+            alert(
+                "Primary image updated successfully"
+            );
 
             if (selectedProduct) {
-                await fetchProductImages(selectedProduct.id);
+                await fetchProductImages(
+                    selectedProduct.id
+                );
+
                 await fetchProducts();
             }
         } catch (error) {
-            console.error("Set primary image error:", error);
+            console.error(
+                "Set primary image error:",
+                error
+            );
 
             alert(
                 error.message ||
@@ -522,24 +810,34 @@ function AdminProducts() {
         }
     }
 
-    async function handleUpdateImageOrder(image) {
+    async function handleUpdateImageOrder(
+        image
+    ) {
         try {
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/product-images/${image.id}/order`,
+                `/api/admin/product-images/${image.id}/order`,
                 {
                     method: "PATCH",
                     headers: {
-                        "Content-Type": "application/json",
+                        "Content-Type":
+                            "application/json",
                         Authorization: `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        display_order: Number(image.display_order) || 0
+                        display_order:
+                            Number(
+                                image.display_order
+                            ) || 0
                     })
                 }
             );
@@ -553,9 +851,14 @@ function AdminProducts() {
                 );
             }
 
-            await fetchProductImages(selectedProduct.id);
+            await fetchProductImages(
+                selectedProduct.id
+            );
         } catch (error) {
-            console.error("Update image order error:", error);
+            console.error(
+                "Update image order error:",
+                error
+            );
 
             alert(
                 error.message ||
@@ -578,18 +881,24 @@ function AdminProducts() {
     // VARIANT MANAGER
     // =========================================================
 
-    async function fetchProductVariants(productId) {
+    async function fetchProductVariants(
+        productId
+    ) {
         try {
             setLoadingVariants(true);
 
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/variants/product/${productId}`,
+                `/api/admin/variants/product/${productId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -606,7 +915,9 @@ function AdminProducts() {
                 );
             }
 
-            setProductVariants(data.variants || []);
+            setProductVariants(
+                data.variants || []
+            );
         } catch (error) {
             console.error(
                 "Fetch product variants error:",
@@ -622,7 +933,9 @@ function AdminProducts() {
         }
     }
 
-    async function openVariantManager(product) {
+    async function openVariantManager(
+        product
+    ) {
         setVariantProduct(product);
         setShowVariantManager(true);
         setProductVariants([]);
@@ -667,7 +980,9 @@ function AdminProducts() {
         });
     }
 
-    async function handleSubmitVariant(event) {
+    async function handleSubmitVariant(
+        event
+    ) {
         event.preventDefault();
 
         if (!variantProduct) {
@@ -679,55 +994,75 @@ function AdminProducts() {
             !variantForm.color.trim() ||
             !variantForm.sku.trim()
         ) {
-            alert("Size, color and SKU are required.");
+            alert(
+                "Size, color and SKU are required."
+            );
             return;
         }
 
         if (
             variantForm.stock === "" ||
-            Number.isNaN(Number(variantForm.stock)) ||
+            Number.isNaN(
+                Number(variantForm.stock)
+            ) ||
             Number(variantForm.stock) < 0
         ) {
-            alert("Stock must be a valid non-negative number.");
+            alert(
+                "Stock must be a valid non-negative number."
+            );
             return;
         }
 
         try {
             setVariantSubmitting(true);
 
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
-            const isEditing = Boolean(editingVariantId);
+            const isEditing = Boolean(
+                editingVariantId
+            );
 
             const url = isEditing
-                ? `http://localhost:5000/api/admin/variants/${editingVariantId}`
-                : "http://localhost:5000/api/admin/variants";
+                ? `/api/admin/variants/${editingVariantId}`
+                : "/api/admin/variants";
 
-            const method = isEditing ? "PUT" : "POST";
+            const method = isEditing
+                ? "PUT"
+                : "POST";
 
             const body = isEditing
                 ? {
                       size: variantForm.size.trim(),
                       color: variantForm.color.trim(),
                       sku: variantForm.sku.trim(),
-                      stock: Number(variantForm.stock)
+                      stock: Number(
+                          variantForm.stock
+                      )
                   }
                 : {
-                      product_id: variantProduct.id,
+                      product_id:
+                          variantProduct.id,
                       size: variantForm.size.trim(),
                       color: variantForm.color.trim(),
                       sku: variantForm.sku.trim(),
-                      stock: Number(variantForm.stock)
+                      stock: Number(
+                          variantForm.stock
+                      )
                   };
 
             const response = await fetch(url, {
                 method,
                 headers: {
-                    "Content-Type": "application/json",
+                    "Content-Type":
+                        "application/json",
                     Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify(body)
@@ -752,9 +1087,10 @@ function AdminProducts() {
 
             resetVariantForm();
 
-            await fetchProductVariants(variantProduct.id);
+            await fetchProductVariants(
+                variantProduct.id
+            );
 
-            // Refresh product total stock
             await fetchProducts();
         } catch (error) {
             console.error(
@@ -771,7 +1107,9 @@ function AdminProducts() {
         }
     }
 
-    async function handleDeleteVariant(variantId) {
+    async function handleDeleteVariant(
+        variantId
+    ) {
         const confirmed = window.confirm(
             "Are you sure you want to delete this variant?"
         );
@@ -781,14 +1119,18 @@ function AdminProducts() {
         }
 
         try {
-            const token = localStorage.getItem("tokyo_trendz_token");
+            const token = localStorage.getItem(
+                "tokyo_trendz_token"
+            );
 
             if (!token) {
-                throw new Error("Please log in as an admin.");
+                throw new Error(
+                    "Please log in as an admin."
+                );
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/variants/${variantId}`,
+                `/api/admin/variants/${variantId}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -806,9 +1148,13 @@ function AdminProducts() {
                 );
             }
 
-            alert("Product variant deleted successfully");
+            alert(
+                "Product variant deleted successfully"
+            );
 
-            if (editingVariantId === variantId) {
+            if (
+                editingVariantId === variantId
+            ) {
                 resetVariantForm();
             }
 
@@ -817,7 +1163,6 @@ function AdminProducts() {
                     variantProduct.id
                 );
 
-                // Refresh total stock in products table
                 await fetchProducts();
             }
         } catch (error) {
@@ -828,7 +1173,7 @@ function AdminProducts() {
 
             alert(
                 error.message ||
-                    "Failed to delete product variant"
+                    "Failed to delete variant"
             );
         }
     }
@@ -850,7 +1195,10 @@ function AdminProducts() {
             <div className="admin-products-header">
                 <div>
                     <h1>Products</h1>
-                    <p>Manage your Tokyo Trendz products</p>
+                    <p>
+                        Manage your Tokyo Trendz
+                        products
+                    </p>
                 </div>
 
                 <button
@@ -875,7 +1223,9 @@ function AdminProducts() {
 
                         <button
                             type="button"
-                            onClick={handleCancelForm}
+                            onClick={
+                                handleCancelForm
+                            }
                         >
                             ✕
                         </button>
@@ -886,106 +1236,282 @@ function AdminProducts() {
                         onSubmit={handleSubmit}
                     >
                         <div className="admin-product-form-grid">
+                            {/* PRODUCT NAME */}
+
                             <div className="admin-product-form-group">
-                                <label>Product Name *</label>
+                                <label>
+                                    Product Name *
+                                </label>
 
                                 <input
                                     type="text"
                                     name="name"
-                                    value={formData.name}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.name
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
+                                    placeholder="Tokyo Essential Oversized Tee"
                                     required
                                 />
                             </div>
 
-                            <div className="admin-product-form-group">
-                                <label>Category ID *</label>
+                            {/* CATEGORY */}
 
-                                <input
-                                    type="number"
+                            <div className="admin-product-form-group">
+                                <label>
+                                    Category *
+                                </label>
+
+                                <select
                                     name="category_id"
-                                    value={formData.category_id}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.category_id
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                     required
-                                />
+                                >
+                                    <option value="">
+                                        Select Category
+                                    </option>
+
+                                    {categories.map(
+                                        (category) => (
+                                            <option
+                                                key={
+                                                    category.id
+                                                }
+                                                value={
+                                                    category.id
+                                                }
+                                            >
+                                                {
+                                                    category.name
+                                                }
+                                            </option>
+                                        )
+                                    )}
+                                </select>
+
+                                {categories.length ===
+                                    0 && (
+                                    <small
+                                        style={{
+                                            color:
+                                                "#999",
+                                            marginTop:
+                                                "6px",
+                                            display:
+                                                "block"
+                                        }}
+                                    >
+                                        No categories
+                                        available.
+                                        Create a
+                                        category first.
+                                    </small>
+                                )}
                             </div>
 
+                            {/* BRAND */}
+
                             <div className="admin-product-form-group">
-                                <label>Brand</label>
+                                <label>
+                                    Brand
+                                </label>
 
                                 <input
                                     type="text"
                                     name="brand"
-                                    value={formData.brand}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.brand
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
+                                    placeholder="Tokyo Trendz"
                                 />
                             </div>
 
+                            {/* MATERIAL */}
+
                             <div className="admin-product-form-group">
-                                <label>Material</label>
+                                <label>
+                                    Material
+                                </label>
 
                                 <input
                                     type="text"
                                     name="material"
-                                    value={formData.material}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.material
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
+                                    placeholder="Cotton"
                                 />
                             </div>
 
+                            {/* PRICE */}
+
                             <div className="admin-product-form-group">
-                                <label>Price *</label>
+                                <label>
+                                    Price *
+                                </label>
 
                                 <input
                                     type="number"
                                     name="price"
-                                    value={formData.price}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.price
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                     min="0"
                                     step="0.01"
+                                    placeholder="1999"
                                     required
                                 />
                             </div>
 
+                            {/* DISCOUNT PERCENTAGE */}
+
                             <div className="admin-product-form-group">
-                                <label>Discount Price</label>
+                                <label>
+                                    Discount (%)
+                                </label>
 
                                 <input
                                     type="number"
-                                    name="discount_price"
                                     value={
-                                        formData.discount_price
+                                        discountPercent
                                     }
-                                    onChange={handleInputChange}
+                                    onChange={
+                                        handleDiscountChange
+                                    }
                                     min="0"
+                                    max="100"
                                     step="0.01"
+                                    placeholder="20"
                                 />
+
+                                <small
+                                    style={{
+                                        color:
+                                            "#999",
+                                        marginTop:
+                                            "6px",
+                                        display:
+                                            "block"
+                                    }}
+                                >
+                                    Enter discount
+                                    percentage,
+                                    e.g. 20%
+                                </small>
                             </div>
 
+                            {/* FINAL PRICE */}
+
                             <div className="admin-product-form-group">
-                                <label>Gender</label>
+                                <label>
+                                    Final Price
+                                </label>
+
+                                <input
+                                    type="text"
+                                    value={
+                                        formData.discount_price
+                                            ? formatPrice(
+                                                  formData.discount_price
+                                              )
+                                            : formData.price
+                                            ? formatPrice(
+                                                  formData.price
+                                              )
+                                            : "₹0.00"
+                                    }
+                                    readOnly
+                                    style={{
+                                        opacity: 0.8,
+                                        cursor: "not-allowed"
+                                    }}
+                                />
+
+                                {discountPercent !==
+                                    "" &&
+                                    formData.discount_price !==
+                                        "" && (
+                                        <small
+                                            style={{
+                                                color:
+                                                    "#aaa",
+                                                marginTop:
+                                                    "6px",
+                                                display:
+                                                    "block"
+                                            }}
+                                        >
+                                            Customer pays{" "}
+                                            <strong
+                                                style={{
+                                                    color:
+                                                        "#ff3b3b"
+                                                }}
+                                            >
+                                                {formatPrice(
+                                                    formData.discount_price
+                                                )}
+                                            </strong>
+                                        </small>
+                                    )}
+                            </div>
+
+                            {/* GENDER */}
+
+                            <div className="admin-product-form-group">
+                                <label>
+                                    Gender
+                                </label>
 
                                 <select
                                     name="gender"
-                                    value={formData.gender}
-                                    onChange={handleInputChange}
+                                    value={
+                                        formData.gender
+                                    }
+                                    onChange={
+                                        handleInputChange
+                                    }
                                 >
                                     <option value="">
                                         Select Gender
                                     </option>
+
                                     <option value="Men">
                                         Men
                                     </option>
+
                                     <option value="Women">
                                         Women
                                     </option>
+
                                     <option value="Unisex">
                                         Unisex
                                     </option>
                                 </select>
                             </div>
 
+                            {/* FEATURED */}
+
                             <div className="admin-product-form-group">
-                                <label>Featured</label>
+                                <label>
+                                    Featured
+                                </label>
 
                                 <label className="admin-checkbox-label">
                                     <input
@@ -1003,8 +1529,12 @@ function AdminProducts() {
                                 </label>
                             </div>
 
+                            {/* ACTIVE */}
+
                             <div className="admin-product-form-group">
-                                <label>Active</label>
+                                <label>
+                                    Active
+                                </label>
 
                                 <label className="admin-checkbox-label">
                                     <input
@@ -1023,16 +1553,27 @@ function AdminProducts() {
                             </div>
                         </div>
 
+                        {/* DESCRIPTION */}
+
                         <div className="admin-product-form-group">
-                            <label>Description</label>
+                            <label>
+                                Description
+                            </label>
 
                             <textarea
                                 name="description"
-                                value={formData.description}
-                                onChange={handleInputChange}
+                                value={
+                                    formData.description
+                                }
+                                onChange={
+                                    handleInputChange
+                                }
                                 rows="5"
+                                placeholder="Describe the product..."
                             />
                         </div>
+
+                        {/* ACTIONS */}
 
                         <div className="admin-product-form-actions">
                             <button
@@ -1047,7 +1588,9 @@ function AdminProducts() {
                             <button
                                 type="button"
                                 className="admin-cancel-product-btn"
-                                onClick={handleCancelForm}
+                                onClick={
+                                    handleCancelForm
+                                }
                             >
                                 Cancel
                             </button>
@@ -1087,135 +1630,179 @@ function AdminProducts() {
                         </thead>
 
                         <tbody>
-                            {products.length === 0 ? (
+                            {products.length ===
+                            0 ? (
                                 <tr>
                                     <td
                                         colSpan="8"
                                         style={{
-                                            textAlign: "center"
+                                            textAlign:
+                                                "center"
                                         }}
                                     >
-                                        No products found.
+                                        No products
+                                        found.
                                     </td>
                                 </tr>
                             ) : (
-                                products.map((product) => (
-                                    <tr key={product.id}>
-                                        <td>
-                                            #{product.id}
-                                        </td>
+                                products.map(
+                                    (product) => (
+                                        <tr
+                                            key={
+                                                product.id
+                                            }
+                                        >
+                                            <td>
+                                                #
+                                                {
+                                                    product.id
+                                                }
+                                            </td>
 
-                                        <td>
-                                            {product.image_url ? (
-                                                <img
-                                                    src={
-                                                        product.image_url
-                                                    }
-                                                    alt={
+                                            <td>
+                                                {product.image_url ? (
+                                                    <img
+                                                        src={
+                                                            product.image_url
+                                                        }
+                                                        alt={
+                                                            product.name
+                                                        }
+                                                        className="admin-product-table-image"
+                                                    />
+                                                ) : (
+                                                    <div>
+                                                        No
+                                                        Image
+                                                    </div>
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                <strong>
+                                                    {
                                                         product.name
                                                     }
-                                                    className="admin-product-table-image"
-                                                />
-                                            ) : (
-                                                <div>
-                                                    No Image
+                                                </strong>
+
+                                                {product.brand && (
+                                                    <small>
+                                                        {
+                                                            product.brand
+                                                        }
+                                                    </small>
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                {product.category_name ||
+                                                    getCategoryName(
+                                                        product.category_id
+                                                    ) ||
+                                                    "-"}
+                                            </td>
+
+                                            <td>
+                                                {formatPrice(
+                                                    product.price
+                                                )}
+
+                                                {product.discount_price &&
+                                                    Number(
+                                                        product.discount_price
+                                                    ) <
+                                                        Number(
+                                                            product.price
+                                                        ) && (
+                                                        <small
+                                                            style={{
+                                                                display:
+                                                                    "block",
+                                                                marginTop:
+                                                                    "4px",
+                                                                color:
+                                                                    "#ff3b3b"
+                                                            }}
+                                                        >
+                                                            Sale{" "}
+                                                            {formatPrice(
+                                                                product.discount_price
+                                                            )}
+                                                        </small>
+                                                    )}
+                                            </td>
+
+                                            <td>
+                                                {product.total_stock ??
+                                                    0}
+                                            </td>
+
+                                            <td>
+                                                {product.is_active ? (
+                                                    <span className="admin-status-active">
+                                                        Active
+                                                    </span>
+                                                ) : (
+                                                    <span className="admin-status-inactive">
+                                                        Inactive
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            <td>
+                                                <div className="admin-product-actions">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openEditProduct(
+                                                                product
+                                                            )
+                                                        }
+                                                    >
+                                                        Edit
+                                                        Product
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openImageManager(
+                                                                product
+                                                            )
+                                                        }
+                                                    >
+                                                        Manage
+                                                        Images
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleDeleteProduct(
+                                                                product.id
+                                                            )
+                                                        }
+                                                    >
+                                                        Delete
+                                                        Product
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            openVariantManager(
+                                                                product
+                                                            )
+                                                        }
+                                                    >
+                                                        Manage
+                                                        Variants
+                                                    </button>
                                                 </div>
-                                            )}
-                                        </td>
-
-                                        <td>
-                                            <strong>
-                                                {
-                                                    product.name
-                                                }
-                                            </strong>
-
-                                            {product.brand && (
-                                                <small>
-                                                    {
-                                                        product.brand
-                                                    }
-                                                </small>
-                                            )}
-                                        </td>
-
-                                        <td>
-                                            {product.category_name ||
-                                                "-"}
-                                        </td>
-
-                                        <td>
-                                            {formatPrice(
-                                                product.price
-                                            )}
-                                        </td>
-
-                                        <td>
-                                            {product.total_stock ??
-                                                0}
-                                        </td>
-
-                                        <td>
-                                            {product.is_active ? (
-                                                <span className="admin-status-active">
-                                                    Active
-                                                </span>
-                                            ) : (
-                                                <span className="admin-status-inactive">
-                                                    Inactive
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        <td>
-                                            <div className="admin-product-actions">
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        openEditProduct(
-                                                            product
-                                                        )
-                                                    }
-                                                >
-                                                    Edit Product
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        openImageManager(
-                                                            product
-                                                        )
-                                                    }
-                                                >
-                                                    Manage Images
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleDeleteProduct(
-                                                            product.id
-                                                        )
-                                                    }
-                                                >
-                                                    Delete Product
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        openVariantManager(
-                                                            product
-                                                        )
-                                                    }
-                                                >
-                                                    Manage Variants
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                            </td>
+                                        </tr>
+                                    )
+                                )
                             )}
                         </tbody>
                     </table>
@@ -1226,627 +1813,667 @@ function AdminProducts() {
                 IMAGE MANAGER MODAL
             ===================================================== */}
 
-            {showImageManager && selectedProduct && (
-                <div
-                    className="admin-image-modal-overlay"
-                    onClick={closeImageManager}
-                >
+            {showImageManager &&
+                selectedProduct && (
                     <div
-                        className="admin-image-modal"
-                        onClick={(event) =>
-                            event.stopPropagation()
+                        className="admin-image-modal-overlay"
+                        onClick={
+                            closeImageManager
                         }
                     >
-                        <div className="admin-image-modal-header">
-                            <div>
-                                <h2>
-                                    Manage Images
-                                </h2>
+                        <div
+                            className="admin-image-modal"
+                            onClick={(event) =>
+                                event.stopPropagation()
+                            }
+                        >
+                            <div className="admin-image-modal-header">
+                                <div>
+                                    <h2>
+                                        Manage Images
+                                    </h2>
 
-                                <p>
-                                    {
-                                        selectedProduct.name
+                                    <p>
+                                        {
+                                            selectedProduct.name
+                                        }
+                                    </p>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        closeImageManager
                                     }
-                                </p>
+                                >
+                                    ✕
+                                </button>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={
-                                    closeImageManager
+                            {/* ADD IMAGE */}
+
+                            <form
+                                className="admin-image-form"
+                                onSubmit={
+                                    handleAddImage
                                 }
                             >
-                                ✕
-                            </button>
-                        </div>
+                                <div>
+                                    <label>
+                                        Image URL
+                                    </label>
 
-                        {/* ADD IMAGE */}
+                                    <input
+                                        type="text"
+                                        value={
+                                            imageUrl
+                                        }
+                                        onChange={(
+                                            event
+                                        ) =>
+                                            setImageUrl(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                        }
+                                        placeholder="https://..."
+                                        required
+                                    />
+                                </div>
 
-                        <form
-                            className="admin-image-form"
-                            onSubmit={handleAddImage}
-                        >
-                            <div>
+                                <div>
+                                    <label>
+                                        Display Order
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={
+                                            imageOrder
+                                        }
+                                        onChange={(
+                                            event
+                                        ) =>
+                                            setImageOrder(
+                                                event
+                                                    .target
+                                                    .value
+                                            )
+                                        }
+                                    />
+                                </div>
+
                                 <label>
-                                    Image URL
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            imagePrimary
+                                        }
+                                        onChange={(
+                                            event
+                                        ) =>
+                                            setImagePrimary(
+                                                event
+                                                    .target
+                                                    .checked
+                                            )
+                                        }
+                                    />
+
+                                    Set as primary
                                 </label>
 
-                                <input
-                                    type="text"
-                                    value={imageUrl}
-                                    onChange={(event) =>
-                                        setImageUrl(
-                                            event.target
-                                                .value
-                                        )
-                                    }
-                                    placeholder="https://..."
-                                    required
-                                />
-                            </div>
+                                <button type="submit">
+                                    Add Image
+                                </button>
+                            </form>
 
-                            <div>
-                                <label>
-                                    Display Order
-                                </label>
+                            {/* IMAGE LIST */}
 
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={imageOrder}
-                                    onChange={(event) =>
-                                        setImageOrder(
-                                            event.target
-                                                .value
-                                        )
-                                    }
-                                />
-                            </div>
-
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={imagePrimary}
-                                    onChange={(event) =>
-                                        setImagePrimary(
-                                            event.target
-                                                .checked
-                                        )
-                                    }
-                                />
-
-                                Set as primary
-                            </label>
-
-                            <button type="submit">
-                                Add Image
-                            </button>
-                        </form>
-
-                        {/* IMAGE LIST */}
-
-                        <div className="admin-image-list">
-                            {imageLoading ? (
-                                <p>
-                                    Loading images...
-                                </p>
-                            ) : productImages.length ===
-                              0 ? (
-                                <p>
-                                    No images found.
-                                </p>
-                            ) : (
-                                <div className="admin-image-grid">
-                                    {productImages.map(
-                                        (image) => (
-                                            <div
-                                                className="admin-image-card"
-                                                key={
-                                                    image.id
-                                                }
-                                            >
-                                                <img
-                                                    src={
-                                                        image.image_url
+                            <div className="admin-image-list">
+                                {imageLoading ? (
+                                    <p>
+                                        Loading
+                                        images...
+                                    </p>
+                                ) : productImages.length ===
+                                  0 ? (
+                                    <p>
+                                        No images
+                                        found.
+                                    </p>
+                                ) : (
+                                    <div className="admin-image-grid">
+                                        {productImages.map(
+                                            (
+                                                image
+                                            ) => (
+                                                <div
+                                                    className="admin-image-card"
+                                                    key={
+                                                        image.id
                                                     }
-                                                    alt={`${selectedProduct.name} ${image.id}`}
-                                                />
-
-                                                <div>
-                                                    <strong>
-                                                        Image #
-                                                        {
-                                                            image.id
+                                                >
+                                                    <img
+                                                        src={
+                                                            image.image_url
                                                         }
-                                                    </strong>
+                                                        alt={`${selectedProduct.name} ${image.id}`}
+                                                    />
 
-                                                    {image.is_primary ? (
-                                                        <span>
-                                                            Primary
-                                                        </span>
-                                                    ) : (
+                                                    <div>
+                                                        <strong>
+                                                            Image
+                                                            #
+                                                            {
+                                                                image.id
+                                                            }
+                                                        </strong>
+
+                                                        {image.is_primary ? (
+                                                            <span>
+                                                                Primary
+                                                            </span>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleSetPrimaryImage(
+                                                                        image.id
+                                                                    )
+                                                                }
+                                                            >
+                                                                Set
+                                                                Primary
+                                                            </button>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <label>
+                                                            Order
+                                                        </label>
+
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={
+                                                                image.display_order ??
+                                                                0
+                                                            }
+                                                            onChange={(
+                                                                event
+                                                            ) => {
+                                                                const value =
+                                                                    event
+                                                                        .target
+                                                                        .value;
+
+                                                                setProductImages(
+                                                                    (
+                                                                        previous
+                                                                    ) =>
+                                                                        previous.map(
+                                                                            (
+                                                                                item
+                                                                            ) =>
+                                                                                item.id ===
+                                                                                image.id
+                                                                                    ? {
+                                                                                          ...item,
+                                                                                          display_order:
+                                                                                              value
+                                                                                      }
+                                                                                    : item
+                                                                        )
+                                                                );
+                                                            }}
+                                                        />
+
                                                         <button
                                                             type="button"
                                                             onClick={() =>
-                                                                handleSetPrimaryImage(
-                                                                    image.id
+                                                                handleUpdateImageOrder(
+                                                                    image
                                                                 )
                                                             }
                                                         >
-                                                            Set Primary
+                                                            Save
+                                                            Order
                                                         </button>
-                                                    )}
-                                                </div>
-
-                                                <div>
-                                                    <label>
-                                                        Order
-                                                    </label>
-
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={
-                                                            image.display_order ??
-                                                            0
-                                                        }
-                                                        onChange={(
-                                                            event
-                                                        ) => {
-                                                            const value =
-                                                                event
-                                                                    .target
-                                                                    .value;
-
-                                                            setProductImages(
-                                                                (
-                                                                    previous
-                                                                ) =>
-                                                                    previous.map(
-                                                                        (
-                                                                            item
-                                                                        ) =>
-                                                                            item.id ===
-                                                                            image.id
-                                                                                ? {
-                                                                                      ...item,
-                                                                                      display_order:
-                                                                                          value
-                                                                                  }
-                                                                                : item
-                                                                    )
-                                                            );
-                                                        }}
-                                                    />
+                                                    </div>
 
                                                     <button
                                                         type="button"
                                                         onClick={() =>
-                                                            handleUpdateImageOrder(
-                                                                image
+                                                            handleDeleteImage(
+                                                                image.id
                                                             )
                                                         }
                                                     >
-                                                        Save Order
+                                                        Delete
+                                                        Image
                                                     </button>
                                                 </div>
+                                            )
+                                        )}
+                                    </div>
+                                )}
+                            </div>
 
-                                                <button
-                                                    type="button"
-                                                    onClick={() =>
-                                                        handleDeleteImage(
-                                                            image.id
-                                                        )
-                                                    }
-                                                >
-                                                    Delete Image
-                                                </button>
-                                            </div>
-                                        )
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="admin-image-modal-footer">
-                            <button
-                                type="button"
-                                onClick={
-                                    closeImageManager
-                                }
-                            >
-                                Close
-                            </button>
+                            <div className="admin-image-modal-footer">
+                                <button
+                                    type="button"
+                                    onClick={
+                                        closeImageManager
+                                    }
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
             {/* =====================================================
                 VARIANT MANAGER MODAL
             ===================================================== */}
 
-            {showVariantManager && variantProduct && (
-                <div
-                    className="admin-image-modal-overlay"
-                    onClick={closeVariantManager}
-                >
+            {showVariantManager &&
+                variantProduct && (
                     <div
-                        className="admin-image-modal"
-                        onClick={(event) =>
-                            event.stopPropagation()
+                        className="admin-image-modal-overlay"
+                        onClick={
+                            closeVariantManager
                         }
-                        style={{
-                            maxWidth: "1000px",
-                            width: "95%"
-                        }}
                     >
-                        {/* HEADER */}
-
-                        <div className="admin-image-modal-header">
-                            <div>
-                                <h2>
-                                    Manage Variants
-                                </h2>
-
-                                <p>
-                                    {
-                                        variantProduct.name
-                                    }
-                                </p>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={
-                                    closeVariantManager
-                                }
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        {/* VARIANT FORM */}
-
-                        <form
-                            className="admin-image-form"
-                            onSubmit={
-                                handleSubmitVariant
+                        <div
+                            className="admin-image-modal"
+                            onClick={(event) =>
+                                event.stopPropagation()
                             }
+                            style={{
+                                maxWidth:
+                                    "1000px",
+                                width: "95%"
+                            }}
                         >
-                            <div>
-                                <label>
-                                    Size
-                                </label>
+                            {/* HEADER */}
 
-                                <input
-                                    type="text"
-                                    name="size"
-                                    value={
-                                        variantForm.size
-                                    }
-                                    onChange={
-                                        handleVariantInputChange
-                                    }
-                                    placeholder="S / M / L / XL"
-                                    required
-                                />
-                            </div>
+                            <div className="admin-image-modal-header">
+                                <div>
+                                    <h2>
+                                        Manage
+                                        Variants
+                                    </h2>
 
-                            <div>
-                                <label>
-                                    Color
-                                </label>
+                                    <p>
+                                        {
+                                            variantProduct.name
+                                        }
+                                    </p>
+                                </div>
 
-                                <input
-                                    type="text"
-                                    name="color"
-                                    value={
-                                        variantForm.color
-                                    }
-                                    onChange={
-                                        handleVariantInputChange
-                                    }
-                                    placeholder="Black"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label>
-                                    SKU
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="sku"
-                                    value={
-                                        variantForm.sku
-                                    }
-                                    onChange={
-                                        handleVariantInputChange
-                                    }
-                                    placeholder="TT-TEE-001-BLK-S"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label>
-                                    Stock
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="stock"
-                                    value={
-                                        variantForm.stock
-                                    }
-                                    onChange={
-                                        handleVariantInputChange
-                                    }
-                                    min="0"
-                                    placeholder="0"
-                                    required
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                disabled={
-                                    variantSubmitting
-                                }
-                            >
-                                {variantSubmitting
-                                    ? "Saving..."
-                                    : editingVariantId
-                                    ? "Update Variant"
-                                    : "Add Variant"}
-                            </button>
-
-                            {editingVariantId && (
                                 <button
                                     type="button"
                                     onClick={
-                                        resetVariantForm
+                                        closeVariantManager
                                     }
                                 >
-                                    Cancel Edit
+                                    ✕
                                 </button>
-                            )}
-                        </form>
+                            </div>
 
-                        {/* VARIANT LIST */}
+                            {/* VARIANT FORM */}
 
-                        <div className="admin-image-list">
-                            <h3>
-                                Product Variants (
-                                {productVariants.length})
-                            </h3>
-
-                            {loadingVariants ? (
-                                <p>
-                                    Loading variants...
-                                </p>
-                            ) : productVariants.length ===
-                              0 ? (
-                                <p>
-                                    No variants found.
-                                </p>
-                            ) : (
-                                <div
-                                    style={{
-                                        overflowX:
-                                            "auto"
-                                    }}
-                                >
-                                    <table
-                                        style={{
-                                            width: "100%",
-                                            borderCollapse:
-                                                "collapse",
-                                            marginTop:
-                                                "15px"
-                                        }}
-                                    >
-                                        <thead>
-                                            <tr>
-                                                <th
-                                                    style={{
-                                                        padding:
-                                                            "12px",
-                                                        textAlign:
-                                                            "left"
-                                                    }}
-                                                >
-                                                    ID
-                                                </th>
-
-                                                <th
-                                                    style={{
-                                                        padding:
-                                                            "12px",
-                                                        textAlign:
-                                                            "left"
-                                                    }}
-                                                >
-                                                    Size
-                                                </th>
-
-                                                <th
-                                                    style={{
-                                                        padding:
-                                                            "12px",
-                                                        textAlign:
-                                                            "left"
-                                                    }}
-                                                >
-                                                    Color
-                                                </th>
-
-                                                <th
-                                                    style={{
-                                                        padding:
-                                                            "12px",
-                                                        textAlign:
-                                                            "left"
-                                                    }}
-                                                >
-                                                    SKU
-                                                </th>
-
-                                                <th
-                                                    style={{
-                                                        padding:
-                                                            "12px",
-                                                        textAlign:
-                                                            "left"
-                                                    }}
-                                                >
-                                                    Stock
-                                                </th>
-
-                                                <th
-                                                    style={{
-                                                        padding:
-                                                            "12px",
-                                                        textAlign:
-                                                            "left"
-                                                    }}
-                                                >
-                                                    Actions
-                                                </th>
-                                            </tr>
-                                        </thead>
-
-                                        <tbody>
-                                            {productVariants.map(
-                                                (
-                                                    variant
-                                                ) => (
-                                                    <tr
-                                                        key={
-                                                            variant.id
-                                                        }
-                                                    >
-                                                        <td
-                                                            style={{
-                                                                padding:
-                                                                    "12px"
-                                                            }}
-                                                        >
-                                                            #
-                                                            {
-                                                                variant.id
-                                                            }
-                                                        </td>
-
-                                                        <td
-                                                            style={{
-                                                                padding:
-                                                                    "12px"
-                                                            }}
-                                                        >
-                                                            {
-                                                                variant.size
-                                                            }
-                                                        </td>
-
-                                                        <td
-                                                            style={{
-                                                                padding:
-                                                                    "12px"
-                                                            }}
-                                                        >
-                                                            {
-                                                                variant.color
-                                                            }
-                                                        </td>
-
-                                                        <td
-                                                            style={{
-                                                                padding:
-                                                                    "12px"
-                                                            }}
-                                                        >
-                                                            {
-                                                                variant.sku
-                                                            }
-                                                        </td>
-
-                                                        <td
-                                                            style={{
-                                                                padding:
-                                                                    "12px"
-                                                            }}
-                                                        >
-                                                            {
-                                                                variant.stock
-                                                            }
-                                                        </td>
-
-                                                        <td
-                                                            style={{
-                                                                padding:
-                                                                    "12px"
-                                                            }}
-                                                        >
-                                                            <div
-                                                                style={{
-                                                                    display:
-                                                                        "flex",
-                                                                    gap: "8px",
-                                                                    flexWrap:
-                                                                        "wrap"
-                                                                }}
-                                                            >
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleEditVariant(
-                                                                            variant
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Edit
-                                                                </button>
-
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() =>
-                                                                        handleDeleteVariant(
-                                                                            variant.id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* FOOTER */}
-
-                        <div className="admin-image-modal-footer">
-                            <button
-                                type="button"
-                                onClick={
-                                    closeVariantManager
+                            <form
+                                className="admin-image-form"
+                                onSubmit={
+                                    handleSubmitVariant
                                 }
                             >
-                                Close
-                            </button>
+                                <div>
+                                    <label>
+                                        Size
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="size"
+                                        value={
+                                            variantForm.size
+                                        }
+                                        onChange={
+                                            handleVariantInputChange
+                                        }
+                                        placeholder="S / M / L / XL"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label>
+                                        Color
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="color"
+                                        value={
+                                            variantForm.color
+                                        }
+                                        onChange={
+                                            handleVariantInputChange
+                                        }
+                                        placeholder="Black"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label>
+                                        SKU
+                                    </label>
+
+                                    <input
+                                        type="text"
+                                        name="sku"
+                                        value={
+                                            variantForm.sku
+                                        }
+                                        onChange={
+                                            handleVariantInputChange
+                                        }
+                                        placeholder="TT-TEE-001-BLK-S"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label>
+                                        Stock
+                                    </label>
+
+                                    <input
+                                        type="number"
+                                        name="stock"
+                                        value={
+                                            variantForm.stock
+                                        }
+                                        onChange={
+                                            handleVariantInputChange
+                                        }
+                                        min="0"
+                                        placeholder="0"
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={
+                                        variantSubmitting
+                                    }
+                                >
+                                    {variantSubmitting
+                                        ? "Saving..."
+                                        : editingVariantId
+                                        ? "Update Variant"
+                                        : "Add Variant"}
+                                </button>
+
+                                {editingVariantId && (
+                                    <button
+                                        type="button"
+                                        onClick={
+                                            resetVariantForm
+                                        }
+                                    >
+                                        Cancel Edit
+                                    </button>
+                                )}
+                            </form>
+
+                            {/* VARIANT LIST */}
+
+                            <div className="admin-image-list">
+                                <h3>
+                                    Product
+                                    Variants (
+                                    {
+                                        productVariants.length
+                                    }
+                                    )
+                                </h3>
+
+                                {loadingVariants ? (
+                                    <p>
+                                        Loading
+                                        variants...
+                                    </p>
+                                ) : productVariants.length ===
+                                  0 ? (
+                                    <p>
+                                        No variants
+                                        found.
+                                    </p>
+                                ) : (
+                                    <div
+                                        style={{
+                                            overflowX:
+                                                "auto"
+                                        }}
+                                    >
+                                        <table
+                                            style={{
+                                                width:
+                                                    "100%",
+                                                borderCollapse:
+                                                    "collapse",
+                                                marginTop:
+                                                    "15px"
+                                            }}
+                                        >
+                                            <thead>
+                                                <tr>
+                                                    <th
+                                                        style={{
+                                                            padding:
+                                                                "12px",
+                                                            textAlign:
+                                                                "left"
+                                                        }}
+                                                    >
+                                                        ID
+                                                    </th>
+
+                                                    <th
+                                                        style={{
+                                                            padding:
+                                                                "12px",
+                                                            textAlign:
+                                                                "left"
+                                                        }}
+                                                    >
+                                                        Size
+                                                    </th>
+
+                                                    <th
+                                                        style={{
+                                                            padding:
+                                                                "12px",
+                                                            textAlign:
+                                                                "left"
+                                                        }}
+                                                    >
+                                                        Color
+                                                    </th>
+
+                                                    <th
+                                                        style={{
+                                                            padding:
+                                                                "12px",
+                                                            textAlign:
+                                                                "left"
+                                                        }}
+                                                    >
+                                                        SKU
+                                                    </th>
+
+                                                    <th
+                                                        style={{
+                                                            padding:
+                                                                "12px",
+                                                            textAlign:
+                                                                "left"
+                                                        }}
+                                                    >
+                                                        Stock
+                                                    </th>
+
+                                                    <th
+                                                        style={{
+                                                            padding:
+                                                                "12px",
+                                                            textAlign:
+                                                                "left"
+                                                        }}
+                                                    >
+                                                        Actions
+                                                    </th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                {productVariants.map(
+                                                    (
+                                                        variant
+                                                    ) => (
+                                                        <tr
+                                                            key={
+                                                                variant.id
+                                                            }
+                                                        >
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "12px"
+                                                                }}
+                                                            >
+                                                                #
+                                                                {
+                                                                    variant.id
+                                                                }
+                                                            </td>
+
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "12px"
+                                                                }}
+                                                            >
+                                                                {
+                                                                    variant.size
+                                                                }
+                                                            </td>
+
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "12px"
+                                                                }}
+                                                            >
+                                                                {
+                                                                    variant.color
+                                                                }
+                                                            </td>
+
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "12px"
+                                                                }}
+                                                            >
+                                                                {
+                                                                    variant.sku
+                                                                }
+                                                            </td>
+
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "12px"
+                                                                }}
+                                                            >
+                                                                {
+                                                                    variant.stock
+                                                                }
+                                                            </td>
+
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "12px"
+                                                                }}
+                                                            >
+                                                                <div
+                                                                    style={{
+                                                                        display:
+                                                                            "flex",
+                                                                        gap: "8px",
+                                                                        flexWrap:
+                                                                            "wrap"
+                                                                    }}
+                                                                >
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleEditVariant(
+                                                                                variant
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            handleDeleteVariant(
+                                                                                variant.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* FOOTER */}
+
+                            <div className="admin-image-modal-footer">
+                                <button
+                                    type="button"
+                                    onClick={
+                                        closeVariantManager
+                                    }
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
         </div>
     );
 }

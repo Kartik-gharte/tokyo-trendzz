@@ -49,7 +49,7 @@ function AdminReports() {
                 productsResponse
             ] = await Promise.all([
                 fetch(
-                    `http://localhost:5000/api/admin/reports/sales${query}`,
+                    `/api/admin/reports/sales${query}`,
                     {
                         headers: {
                             Authorization:
@@ -59,7 +59,7 @@ function AdminReports() {
                 ),
 
                 fetch(
-                    `http://localhost:5000/api/admin/reports/products${query}`,
+                    `/api/admin/reports/products${query}`,
                     {
                         headers: {
                             Authorization:

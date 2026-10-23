@@ -38,7 +38,7 @@ function AdminUsers() {
             );
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/users",
+                "/api/admin/users",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -74,7 +74,7 @@ function AdminUsers() {
             );
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/users/${userId}`,
+                `/api/admin/users/${userId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -121,7 +121,7 @@ function AdminUsers() {
             );
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/users/${userId}/role`,
+                `/api/admin/users/${userId}/role`,
                 {
                     method: "PATCH",
                     headers: {

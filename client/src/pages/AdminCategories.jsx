@@ -1,14 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Search,
     Plus,
     Pencil,
     Trash2,
     FolderOpen,
-    X
+    X,
+    RefreshCw,
+    Package
 } from "lucide-react";
 
 import "./AdminCategories.css";
+
+const API_URL = "/api/admin/categories";
 
 function AdminCategories() {
     const [categories, setCategories] = useState([]);
@@ -48,14 +52,11 @@ function AdminCategories() {
                 );
             }
 
-            const response = await fetch(
-                "http://localhost:5000/api/admin/categories",
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+            const response = await fetch(API_URL, {
+                headers: {
+                    Authorization: `Bearer ${token}`
                 }
-            );
+            });
 
             const data = await response.json();
 
@@ -82,15 +83,18 @@ function AdminCategories() {
         }
     }
 
-    function openAddForm() {
-        setEditMode(false);
-        setEditingCategoryId(null);
-
+    function resetForm() {
         setFormData({
             name: "",
             image_url: ""
         });
 
+        setEditMode(false);
+        setEditingCategoryId(null);
+    }
+
+    function openAddForm() {
+        resetForm();
         setShowForm(true);
     }
 
@@ -107,16 +111,12 @@ function AdminCategories() {
     }
 
     function closeForm() {
-        if (submitting) return;
+        if (submitting) {
+            return;
+        }
 
         setShowForm(false);
-        setEditMode(false);
-        setEditingCategoryId(null);
-
-        setFormData({
-            name: "",
-            image_url: ""
-        });
+        resetForm();
     }
 
     function handleInputChange(event) {
@@ -130,6 +130,13 @@ function AdminCategories() {
 
     async function handleSubmit(event) {
         event.preventDefault();
+
+        const trimmedName = formData.name.trim();
+
+        if (!trimmedName) {
+            alert("Please enter a category name.");
+            return;
+        }
 
         try {
             setSubmitting(true);
@@ -145,8 +152,8 @@ function AdminCategories() {
             }
 
             const url = editMode
-                ? `http://localhost:5000/api/admin/categories/${editingCategoryId}`
-                : "http://localhost:5000/api/admin/categories";
+                ? `${API_URL}/${editingCategoryId}`
+                : API_URL;
 
             const method = editMode ? "PUT" : "POST";
 
@@ -156,7 +163,10 @@ function AdminCategories() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    name: trimmedName,
+                    image_url: formData.image_url.trim()
+                })
             });
 
             const data = await response.json();
@@ -174,8 +184,10 @@ function AdminCategories() {
                     : "Category created successfully."
             );
 
-            closeForm();
-            fetchCategories();
+            setShowForm(false);
+            resetForm();
+
+            await fetchCategories();
         } catch (error) {
             console.error(
                 "Save category error:",
@@ -192,11 +204,11 @@ function AdminCategories() {
     }
 
     async function handleDelete(category) {
-        if (
-            !window.confirm(
-                `Are you sure you want to delete "${category.name}"?`
-            )
-        ) {
+        const confirmed = window.confirm(
+            `Are you sure you want to delete "${category.name}"?`
+        );
+
+        if (!confirmed) {
             return;
         }
 
@@ -212,7 +224,7 @@ function AdminCategories() {
             }
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/categories/${category.id}`,
+                `${API_URL}/${category.id}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -232,7 +244,7 @@ function AdminCategories() {
 
             alert("Category deleted successfully.");
 
-            fetchCategories();
+            await fetchCategories();
         } catch (error) {
             console.error(
                 "Delete category error:",
@@ -246,51 +258,77 @@ function AdminCategories() {
         }
     }
 
-    const filteredCategories = categories.filter(
-        (category) =>
-            category.name
-                ?.toLowerCase()
-                .includes(search.toLowerCase()) ||
-            category.slug
-                ?.toLowerCase()
-                .includes(search.toLowerCase())
-    );
+    const filteredCategories = useMemo(() => {
+        const searchValue = search
+            .trim()
+            .toLowerCase();
+
+        if (!searchValue) {
+            return categories;
+        }
+
+        return categories.filter((category) => {
+            const name =
+                category.name?.toLowerCase() || "";
+
+            const slug =
+                category.slug?.toLowerCase() || "";
+
+            return (
+                name.includes(searchValue) ||
+                slug.includes(searchValue)
+            );
+        });
+    }, [categories, search]);
 
     return (
         <div className="admin-categories">
+            {/* =================================================
+                HEADER
+            ================================================= */}
+
             <div className="admin-categories-header">
                 <div>
+                    <span className="categories-eyebrow">
+                        TOKYO TRENDZ / ADMIN
+                    </span>
+
                     <h1>Categories</h1>
+
                     <p>
-                        Manage product categories for
-                        Tokyo Trendz.
+                        Organize products into clean
+                        storefront collections.
                     </p>
                 </div>
 
                 <button
+                    type="button"
                     className="add-category-button"
                     onClick={openAddForm}
                 >
-                    <Plus size={18} />
+                    <Plus size={17} />
                     Add Category
                 </button>
             </div>
 
+            {/* =================================================
+                TOOLBAR
+            ================================================= */}
+
             <div className="categories-toolbar">
                 <div className="categories-count">
-                    <FolderOpen size={18} />
+                    <FolderOpen size={17} />
 
                     <span>
                         {filteredCategories.length}{" "}
-                        categor
                         {filteredCategories.length === 1
-                            ? "y"
-                            : "ies"}
+                            ? "Category"
+                            : "Categories"}
                     </span>
                 </div>
 
                 <div className="category-search">
-                    <Search size={18} />
+                    <Search size={17} />
 
                     <input
                         type="text"
@@ -303,27 +341,70 @@ function AdminCategories() {
                 </div>
             </div>
 
+            {/* =================================================
+                CONTENT STATES
+            ================================================= */}
+
             {loading ? (
                 <div className="categories-state">
-                    <div className="categories-spinner"></div>
-                    <p>Loading categories...</p>
+                    <div className="categories-spinner" />
+
+                    <h3>Loading Categories</h3>
+
+                    <p>
+                        Fetching category information...
+                    </p>
                 </div>
             ) : error ? (
                 <div className="categories-state error">
+                    <X size={40} />
+
+                    <h3>
+                        Unable to Load Categories
+                    </h3>
+
                     <p>{error}</p>
 
-                    <button onClick={fetchCategories}>
+                    <button
+                        type="button"
+                        onClick={fetchCategories}
+                    >
+                        <RefreshCw size={15} />
                         Try Again
                     </button>
                 </div>
             ) : filteredCategories.length === 0 ? (
                 <div className="categories-state">
-                    <FolderOpen size={40} />
+                    <FolderOpen size={42} />
+
+                    <h3>
+                        {search
+                            ? "No Categories Found"
+                            : "No Categories Available"}
+                    </h3>
+
                     <p>
                         {search
-                            ? "No categories found."
-                            : "No categories available."}
+                            ? "Try changing your search."
+                            : "Create your first product category."}
                     </p>
+
+                    {search ? (
+                        <button
+                            type="button"
+                            onClick={() => setSearch("")}
+                        >
+                            Clear Search
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={openAddForm}
+                        >
+                            <Plus size={15} />
+                            Add Category
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="categories-grid">
@@ -333,6 +414,8 @@ function AdminCategories() {
                                 className="category-card"
                                 key={category.id}
                             >
+                                {/* IMAGE */}
+
                                 <div className="category-image">
                                     {category.image_url ? (
                                         <img
@@ -342,28 +425,47 @@ function AdminCategories() {
                                             alt={
                                                 category.name
                                             }
+                                            onError={(
+                                                event
+                                            ) => {
+                                                event.currentTarget.style.display =
+                                                    "none";
+                                            }}
                                         />
                                     ) : (
                                         <FolderOpen
-                                            size={35}
+                                            size={40}
                                         />
                                     )}
                                 </div>
 
-                                <div className="category-card-content">
-                                    <div>
-                                        <h3>
-                                            {
-                                                category.name
-                                            }
-                                        </h3>
+                                {/* CONTENT */}
 
-                                        <span>
-                                            /{category.slug}
-                                        </span>
+                                <div className="category-card-content">
+                                    <div className="category-card-top">
+                                        <div>
+                                            <h3>
+                                                {
+                                                    category.name
+                                                }
+                                            </h3>
+
+                                            <span>
+                                                /
+                                                {
+                                                    category.slug
+                                                }
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="category-product-count">
+                                        <Package
+                                            size={12}
+                                        />
+
+                                        &nbsp;
+
                                         {
                                             category.product_count
                                         }{" "}
@@ -377,6 +479,7 @@ function AdminCategories() {
 
                                     <div className="category-actions">
                                         <button
+                                            type="button"
                                             className="edit-category-button"
                                             onClick={() =>
                                                 openEditForm(
@@ -385,12 +488,13 @@ function AdminCategories() {
                                             }
                                         >
                                             <Pencil
-                                                size={16}
+                                                size={15}
                                             />
                                             Edit
                                         </button>
 
                                         <button
+                                            type="button"
                                             className="delete-category-button"
                                             onClick={() =>
                                                 handleDelete(
@@ -399,7 +503,7 @@ function AdminCategories() {
                                             }
                                         >
                                             <Trash2
-                                                size={16}
+                                                size={15}
                                             />
                                             Delete
                                         </button>
@@ -411,8 +515,23 @@ function AdminCategories() {
                 </div>
             )}
 
+            {/* =================================================
+                ADD / EDIT MODAL
+            ================================================= */}
+
             {showForm && (
-                <div className="category-modal-overlay">
+                <div
+                    className="category-modal-overlay"
+                    onMouseDown={(event) => {
+                        if (
+                            event.target ===
+                            event.currentTarget &&
+                            !submitting
+                        ) {
+                            closeForm();
+                        }
+                    }}
+                >
                     <div className="category-modal">
                         <div className="category-modal-header">
                             <div>
@@ -430,11 +549,13 @@ function AdminCategories() {
                             </div>
 
                             <button
+                                type="button"
                                 className="category-modal-close"
                                 onClick={closeForm}
                                 disabled={submitting}
+                                aria-label="Close modal"
                             >
-                                <X size={20} />
+                                <X size={19} />
                             </button>
                         </div>
 
@@ -443,11 +564,12 @@ function AdminCategories() {
                             onSubmit={handleSubmit}
                         >
                             <div className="category-form-group">
-                                <label>
+                                <label htmlFor="category-name">
                                     Category Name
                                 </label>
 
                                 <input
+                                    id="category-name"
                                     type="text"
                                     name="name"
                                     value={
@@ -458,15 +580,17 @@ function AdminCategories() {
                                     }
                                     placeholder="e.g. Sweatshirts"
                                     required
+                                    autoFocus
                                 />
                             </div>
 
                             <div className="category-form-group">
-                                <label>
+                                <label htmlFor="category-image">
                                     Image URL
                                 </label>
 
                                 <input
+                                    id="category-image"
                                     type="url"
                                     name="image_url"
                                     value={
@@ -485,7 +609,7 @@ function AdminCategories() {
                                         src={
                                             formData.image_url
                                         }
-                                        alt="Preview"
+                                        alt="Category preview"
                                         onError={(
                                             event
                                         ) => {
@@ -501,7 +625,9 @@ function AdminCategories() {
                                     type="button"
                                     className="category-cancel-button"
                                     onClick={closeForm}
-                                    disabled={submitting}
+                                    disabled={
+                                        submitting
+                                    }
                                 >
                                     Cancel
                                 </button>
@@ -509,7 +635,9 @@ function AdminCategories() {
                                 <button
                                     type="submit"
                                     className="category-save-button"
-                                    disabled={submitting}
+                                    disabled={
+                                        submitting
+                                    }
                                 >
                                     {submitting
                                         ? "Saving..."

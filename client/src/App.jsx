@@ -1,3 +1,4 @@
+import IntroLoader from "./components/IntroLoader";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { CartProvider } from "./context/CartContext";
@@ -19,6 +20,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Account from "./pages/Account";
 import OrderDetails from "./pages/OrderDetails";
+
 import AdminOrders from "./pages/AdminOrders";
 import AdminProducts from "./pages/AdminProducts";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -35,6 +37,9 @@ import AdminReports from "./pages/AdminReports";
 function App() {
     return (
         <BrowserRouter>
+
+            <IntroLoader />
+
             <AuthProvider>
                 <CartProvider>
                     <WishlistProvider>
@@ -46,83 +51,120 @@ function App() {
                             ========================================== */}
 
                             <Route
-                                path="*"
+                                path="/"
                                 element={
                                     <>
                                         <Navbar />
-
-                                        <Routes>
-
-                                            <Route
-                                                path="/"
-                                                element={<Home />}
-                                            />
-
-                                            <Route
-                                                path="/products"
-                                                element={<Products />}
-                                            />
-
-                                            <Route
-                                                path="/products/:id"
-                                                element={<ProductDetails />}
-                                            />
-
-                                            <Route
-                                                path="/cart"
-                                                element={<Cart />}
-                                            />
-
-                                            <Route
-                                                path="/checkout"
-                                                element={<Checkout />}
-                                            />
-
-                                            <Route
-                                                path="/wishlist"
-                                                element={<Wishlist />}
-                                            />
-
-                                            <Route
-                                                path="/login"
-                                                element={<Login />}
-                                            />
-
-                                            <Route
-                                                path="/register"
-                                                element={<Register />}
-                                            />
-
-                                            <Route
-                                                path="/account"
-                                                element={
-                                                    <ProtectedRoute>
-                                                        <Account />
-                                                    </ProtectedRoute>
-                                                }
-                                            />
-
-                                            <Route
-                                                path="/orders/:orderId"
-                                                element={
-                                                    <ProtectedRoute>
-                                                        <OrderDetails />
-                                                    </ProtectedRoute>
-                                                }
-                                            />
-
-                                        </Routes>
+                                        <Home />
                                     </>
                                 }
                             />
 
-                        </Routes>
+                            <Route
+                                path="/products"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <Products />
+                                    </>
+                                }
+                            />
 
-                        {/* ==========================================
-                            ADMIN ROUTES
-                        ========================================== */}
+                            <Route
+                                path="/products/:id"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <ProductDetails />
+                                    </>
+                                }
+                            />
 
-                        <Routes>
+                            <Route
+                                path="/cart"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <Cart />
+                                    </>
+                                }
+                            />
+
+                            <Route
+                                path="/checkout"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <Checkout />
+                                    </>
+                                }
+                            />
+
+                            <Route
+                                path="/wishlist"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <Wishlist />
+                                    </>
+                                }
+                            />
+
+                            <Route
+                                path="/login"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <Login />
+                                    </>
+                                }
+                            />
+
+                            <Route
+                                path="/register"
+                                element={
+                                    <>
+                                        <Navbar />
+                                        <Register />
+                                    </>
+                                }
+                            />
+
+                            <Route
+                                path="/account"
+                                element={
+                                    <ProtectedRoute>
+                                        <Navbar />
+                                        <Account />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+                            <Route
+                                path="/orders/:orderId"
+                                element={
+                                    <ProtectedRoute>
+                                        <Navbar />
+                                        <OrderDetails />
+                                    </ProtectedRoute>
+                                }
+                            />
+
+
+                            {/* ==========================================
+                                ADMIN ROUTES
+                            ========================================== */}
+
+                            <Route
+                                path="/admin"
+                                element={
+                                    <AdminRoute>
+                                        <AdminLayout>
+                                            <AdminDashboard />
+                                        </AdminLayout>
+                                    </AdminRoute>
+                                }
+                            />
 
                             <Route
                                 path="/admin/dashboard"
@@ -141,17 +183,6 @@ function App() {
                                     <AdminRoute>
                                         <AdminLayout>
                                             <AdminAnalytics />
-                                        </AdminLayout>
-                                    </AdminRoute>
-                                }
-                            />
-
-                            <Route
-                                path="/admin"
-                                element={
-                                    <AdminRoute>
-                                        <AdminLayout>
-                                            <AdminDashboard />
                                         </AdminLayout>
                                     </AdminRoute>
                                 }

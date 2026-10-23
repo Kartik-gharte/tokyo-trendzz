@@ -9,7 +9,7 @@ import { useAuth } from "./AuthContext";
 
 const WishlistContext = createContext();
 
-const API_URL = "http://localhost:5000/api/wishlist";
+const API_URL = "/api/wishlist";
 
 export function WishlistProvider({ children }) {
     const { user, token, isAuthenticated } = useAuth();

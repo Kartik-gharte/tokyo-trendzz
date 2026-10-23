@@ -5,6 +5,7 @@ import {
     Minus,
     Plus,
     ShoppingBag,
+    Star,
     Zap
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -33,8 +34,28 @@ function ProductDetails() {
     const [selectedColor, setSelectedColor] = useState("");
     const [quantity, setQuantity] = useState(1);
 
+    /* =====================================================
+       REVIEWS
+    ===================================================== */
+
+    const [reviews, setReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+
+    const [selectedRating, setSelectedRating] = useState(0);
+    const [reviewComment, setReviewComment] = useState("");
+
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [reviewMessage, setReviewMessage] = useState("");
+    const [reviewError, setReviewError] = useState("");
+
     useEffect(() => {
         loadProduct();
+    }, [id]);
+
+    useEffect(() => {
+        if (id) {
+            loadReviews();
+        }
     }, [id]);
 
     async function loadProduct() {
@@ -55,6 +76,29 @@ function ProductDetails() {
             setError("Unable to load this product.");
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function loadReviews() {
+        try {
+            setReviewsLoading(true);
+
+            const response = await fetch(
+                `/api/reviews/product/${id}`
+            );
+
+            const data = await response.json();
+
+            if (data.success) {
+                setReviews(data.reviews || []);
+            }
+        } catch (error) {
+            console.error(
+                "Failed to load reviews:",
+                error
+            );
+        } finally {
+            setReviewsLoading(false);
         }
     }
 
@@ -89,6 +133,128 @@ function ProductDetails() {
         }
 
         toggleWishlist(product);
+    }
+
+    async function handleSubmitReview() {
+        setReviewMessage("");
+        setReviewError("");
+
+        if (selectedRating === 0) {
+            setReviewError(
+                "Please select a rating."
+            );
+
+            return;
+        }
+
+        if (!reviewComment.trim()) {
+            setReviewError(
+                "Please write your review."
+            );
+
+            return;
+        }
+
+        const token =
+            localStorage.getItem(
+                "tokyo_trendz_token"
+            );
+
+        if (!token) {
+            setReviewError(
+                "Please login to submit a review."
+            );
+
+            return;
+        }
+
+        try {
+            setReviewSubmitting(true);
+
+            const response = await fetch(
+                "/api/reviews",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+                        Authorization:
+                            `Bearer ${token}`
+                    },
+
+                    body: JSON.stringify({
+                        product_id: Number(id),
+                        rating: selectedRating,
+                        comment:
+                            reviewComment.trim()
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message ||
+                    "Failed to submit review."
+                );
+            }
+
+            setReviewMessage(
+                "Review submitted successfully!"
+            );
+
+            setSelectedRating(0);
+            setReviewComment("");
+
+            await loadReviews();
+        } catch (error) {
+            console.error(
+                "Submit review error:",
+                error
+            );
+
+            setReviewError(
+                error.message ||
+                "Failed to submit review."
+            );
+        } finally {
+            setReviewSubmitting(false);
+        }
+    }
+
+    function renderStars(rating, size = 18) {
+        return (
+            <div className="review-stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                        key={star}
+                        size={size}
+                        fill={
+                            star <= rating
+                                ? "currentColor"
+                                : "none"
+                        }
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    function formatReviewDate(date) {
+        if (!date) {
+            return "";
+        }
+
+        return new Date(date).toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
     }
 
     if (loading) {
@@ -151,7 +317,9 @@ function ProductDetails() {
     return (
         <main className="product-details-page">
 
-            {/* BACK */}
+            {/* =================================================
+                BACK
+            ================================================= */}
 
             <div className="product-details-top">
 
@@ -165,7 +333,10 @@ function ProductDetails() {
 
             </div>
 
-            {/* PRODUCT */}
+
+            {/* =================================================
+                PRODUCT
+            ================================================= */}
 
             <section className="product-details-container">
 
@@ -216,6 +387,7 @@ function ProductDetails() {
 
                 </div>
 
+
                 {/* PRODUCT INFORMATION */}
 
                 <div className="product-details-info">
@@ -231,6 +403,7 @@ function ProductDetails() {
                     <p className="details-category">
                         {product.category_name}
                     </p>
+
 
                     {/* PRICE */}
 
@@ -283,6 +456,7 @@ function ProductDetails() {
 
                     <div className="details-divider"></div>
 
+
                     {/* DESCRIPTION */}
 
                     <div className="details-description">
@@ -297,6 +471,7 @@ function ProductDetails() {
                         </p>
 
                     </div>
+
 
                     {/* SIZE */}
 
@@ -339,6 +514,7 @@ function ProductDetails() {
                         </div>
                     )}
 
+
                     {/* COLOR */}
 
                     {colors.length > 0 && (
@@ -380,6 +556,7 @@ function ProductDetails() {
                         </div>
                     )}
 
+
                     {/* QUANTITY */}
 
                     <div className="quantity-section">
@@ -411,6 +588,7 @@ function ProductDetails() {
                         </div>
 
                     </div>
+
 
                     {/* ACTIONS */}
 
@@ -461,6 +639,7 @@ function ProductDetails() {
 
                     </div>
 
+
                     {/* EXTRA INFORMATION */}
 
                     <div className="product-extra-info">
@@ -503,6 +682,237 @@ function ProductDetails() {
                         </div>
 
                     </div>
+
+                </div>
+
+            </section>
+
+
+            {/* =================================================
+                CUSTOMER REVIEWS
+            ================================================= */}
+
+            <section className="product-reviews-section">
+
+                <div className="product-reviews-header">
+
+                    <div>
+                        <span className="reviews-eyebrow">
+                            CUSTOMER FEEDBACK
+                        </span>
+
+                        <h2>
+                            Ratings & Reviews
+                        </h2>
+
+                        <p>
+                            See what customers think about this product.
+                        </p>
+                    </div>
+
+                    <div className="reviews-count">
+                        <strong>
+                            {reviews.length}
+                        </strong>
+
+                        <span>
+                            {reviews.length === 1
+                                ? "Review"
+                                : "Reviews"}
+                        </span>
+                    </div>
+
+                </div>
+
+
+                {/* WRITE REVIEW */}
+
+                <div className="write-review-card">
+
+                    <div className="write-review-heading">
+
+                        <h3>
+                            Write a Review
+                        </h3>
+
+                        <p>
+                            Share your experience with this product.
+                        </p>
+
+                    </div>
+
+
+                    {/* STAR SELECTOR */}
+
+                    <div className="review-rating-input">
+
+                        <span>
+                            Your Rating
+                        </span>
+
+                        <div className="rating-selector">
+
+                            {[1, 2, 3, 4, 5].map(
+                                (star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        className={
+                                            star <= selectedRating
+                                                ? "rating-star active"
+                                                : "rating-star"
+                                        }
+                                        onClick={() =>
+                                            setSelectedRating(
+                                                star
+                                            )
+                                        }
+                                        aria-label={`${star} star`}
+                                    >
+                                        <Star
+                                            size={24}
+                                            fill={
+                                                star <=
+                                                selectedRating
+                                                    ? "currentColor"
+                                                    : "none"
+                                            }
+                                        />
+                                    </button>
+                                )
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    {/* COMMENT */}
+
+                    <textarea
+                        className="review-textarea"
+                        value={reviewComment}
+                        onChange={(event) =>
+                            setReviewComment(
+                                event.target.value
+                            )
+                        }
+                        placeholder="Tell us what you liked or disliked about this product..."
+                        maxLength={1000}
+                    />
+
+                    <div className="review-form-footer">
+
+                        <span>
+                            {reviewComment.length}/1000
+                        </span>
+
+                        <button
+                            type="button"
+                            className="submit-review-button"
+                            onClick={handleSubmitReview}
+                            disabled={reviewSubmitting}
+                        >
+                            {reviewSubmitting
+                                ? "Submitting..."
+                                : "Submit Review"}
+                        </button>
+
+                    </div>
+
+
+                    {reviewError && (
+                        <div className="review-form-error">
+                            {reviewError}
+                        </div>
+                    )}
+
+                    {reviewMessage && (
+                        <div className="review-form-success">
+                            {reviewMessage}
+                        </div>
+                    )}
+
+                </div>
+
+
+                {/* EXISTING REVIEWS */}
+
+                <div className="customer-reviews-list">
+
+                    {reviewsLoading ? (
+                        <div className="reviews-state">
+                            Loading reviews...
+                        </div>
+                    ) : reviews.length === 0 ? (
+                        <div className="reviews-state empty">
+                            <Star size={30} />
+
+                            <h3>
+                                No reviews yet
+                            </h3>
+
+                            <p>
+                                Be the first to review this product.
+                            </p>
+                        </div>
+                    ) : (
+                        reviews.map((review) => (
+                            <article
+                                className="customer-review-card"
+                                key={review.id}
+                            >
+
+                                <div className="customer-review-top">
+
+                                    <div className="customer-review-user">
+
+                                        <div className="customer-review-avatar">
+                                            {review.customer_name
+                                                ?.charAt(0)
+                                                ?.toUpperCase() || "U"}
+                                        </div>
+
+                                        <div>
+
+                                            <h4>
+                                                {review.customer_name ||
+                                                    "Customer"}
+                                            </h4>
+
+                                            <span>
+                                                Verified Customer
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+                                    <span className="customer-review-date">
+                                        {formatReviewDate(
+                                            review.created_at
+                                        )}
+                                    </span>
+
+                                </div>
+
+
+                                <div className="customer-review-rating">
+                                    {renderStars(
+                                        Number(
+                                            review.rating
+                                        )
+                                    )}
+                                </div>
+
+
+                                <p className="customer-review-comment">
+                                    {review.comment}
+                                </p>
+
+                            </article>
+                        ))
+                    )}
 
                 </div>
 

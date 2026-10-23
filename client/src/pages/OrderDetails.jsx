@@ -50,7 +50,7 @@ function OrderDetails() {
 
             try {
                 const response = await fetch(
-                    "http://localhost:5000/api/orders",
+                    "/api/orders",
                     {
                         headers: {
                             Authorization:
@@ -126,7 +126,7 @@ function OrderDetails() {
             for (const item of order.items) {
 
                 const response = await fetch(
-                    `http://localhost:5000/api/products/${item.productId}`
+                    `/api/products/${item.productId}`
                 );
 
                 const data =
@@ -187,7 +187,7 @@ function OrderDetails() {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/orders/${orderId}/cancel`,
+                `/api/orders/${orderId}/cancel`,
                 {
                     method: "PATCH",
 

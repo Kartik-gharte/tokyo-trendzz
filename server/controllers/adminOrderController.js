@@ -1,5 +1,7 @@
+
 const db = require("../config/db");
 const { createNotification } = require("../utils/notificationHelper");
+const { sendOrderStatusEmail } = require("../utils/emailService");
 
 async function getAllOrders(req, res) {
     try {
@@ -37,7 +39,6 @@ async function getAllOrders(req, res) {
     }
 }
 
-
 async function updateOrderStatus(req, res) {
     try {
         const { orderId } = req.params;
@@ -60,16 +61,20 @@ async function updateOrderStatus(req, res) {
             });
         }
 
-        // Get order details before updating
+        // Fetch the order and customer email before updating.
         const [orders] = await db.promise().query(
             `
             SELECT
-                id,
-                user_id,
-                order_number,
-                order_status
-            FROM orders
-            WHERE id = ?
+                o.id,
+                o.user_id,
+                o.order_number,
+                o.order_status,
+                u.name AS customer_name,
+                u.email AS customer_email
+            FROM orders o
+            INNER JOIN users u
+                ON o.user_id = u.id
+            WHERE o.id = ?
             `,
             [orderId]
         );
@@ -83,7 +88,7 @@ async function updateOrderStatus(req, res) {
 
         const order = orders[0];
 
-        // Don't create notification if status hasn't changed
+        // Do nothing if the status has not changed.
         if (order.order_status === status) {
             return res.status(200).json({
                 success: true,
@@ -91,7 +96,7 @@ async function updateOrderStatus(req, res) {
             });
         }
 
-        // Update order status
+        // Preserve the existing order-status update.
         const [result] = await db.promise().query(
             `
             UPDATE orders
@@ -108,52 +113,73 @@ async function updateOrderStatus(req, res) {
             });
         }
 
-        // Notification details
+        // Existing in-app notification messages.
         const notificationDetails = {
             confirmed: {
                 title: "Order Confirmed",
-                message: `Your order ${order.order_number} has been confirmed.`,
+                message: `Your order ${order.order_number} has been confirmed.`
             },
 
             packed: {
                 title: "Order Packed",
-                message: `Your order ${order.order_number} has been packed.`,
+                message: `Your order ${order.order_number} has been packed.`
             },
 
             shipped: {
                 title: "Order Shipped",
-                message: `Your order ${order.order_number} has been shipped.`,
+                message: `Your order ${order.order_number} has been shipped.`
             },
 
             out_for_delivery: {
                 title: "Out for Delivery",
-                message: `Your order ${order.order_number} is out for delivery.`,
+                message: `Your order ${order.order_number} is out for delivery.`
             },
 
             delivered: {
                 title: "Order Delivered",
-                message: `Your order ${order.order_number} has been delivered.`,
+                message: `Your order ${order.order_number} has been delivered.`
             },
 
             cancelled: {
                 title: "Order Cancelled",
-                message: `Your order ${order.order_number} has been cancelled.`,
+                message: `Your order ${order.order_number} has been cancelled.`
             },
 
             placed: {
                 title: "Order Status Updated",
-                message: `Your order ${order.order_number} is now placed.`,
+                message: `Your order ${order.order_number} is now placed.`
             }
         };
 
         const notification = notificationDetails[status];
 
+        // Preserve the existing in-app notification.
         await createNotification(
             order.user_id,
             "order_status",
             notification.title,
             notification.message
         );
+
+        // Send the customer an email without allowing email errors
+        // to undo or interrupt the successful order-status update.
+        try {
+            await sendOrderStatusEmail({
+                to: order.customer_email,
+                customerName: order.customer_name,
+                orderNumber: order.order_number || order.id,
+                status
+            });
+
+            console.log(
+                `Order status email sent for order ${order.id} (${status}).`
+            );
+        } catch (emailError) {
+            console.error(
+                `Order status updated, but email failed for order ${order.id}:`,
+                emailError.message
+            );
+        }
 
         return res.status(200).json({
             success: true,
@@ -169,7 +195,6 @@ async function updateOrderStatus(req, res) {
         });
     }
 }
-
 
 module.exports = {
     getAllOrders,

@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:5000/api/products";
+
+const API_URL = "/api/products";
 
 // Get all products
 export async function getProducts() {
@@ -10,14 +11,12 @@ export async function getProducts() {
         }
 
         const data = await response.json();
-
         return data.products;
     } catch (error) {
         console.error("Product API Error:", error);
         throw error;
     }
 }
-
 
 // Get single product
 export async function getProductById(id) {
@@ -29,7 +28,6 @@ export async function getProductById(id) {
         }
 
         const data = await response.json();
-
         return data.product;
     } catch (error) {
         console.error("Product API Error:", error);

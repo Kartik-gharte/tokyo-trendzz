@@ -5,14 +5,16 @@ import {
     Trash2,
     MessageSquare,
     Package,
-    Users,
-    TrendingUp
+    TrendingUp,
+    Eye,
+    X
 } from "lucide-react";
 
 import "./AdminReviews.css";
 
 function AdminReviews() {
     const [reviews, setReviews] = useState([]);
+
     const [stats, setStats] = useState({
         total_reviews: 0,
         average_rating: 0,
@@ -26,6 +28,8 @@ function AdminReviews() {
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    const [selectedReview, setSelectedReview] = useState(null);
 
     useEffect(() => {
         fetchReviews();
@@ -42,7 +46,7 @@ function AdminReviews() {
             );
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/reviews",
+                "/api/admin/reviews",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -74,7 +78,7 @@ function AdminReviews() {
             );
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/reviews/stats",
+                "/api/admin/reviews/stats",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -112,7 +116,7 @@ function AdminReviews() {
             );
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/reviews/${reviewId}`,
+                `/api/admin/reviews/${reviewId}`,
                 {
                     method: "DELETE",
                     headers: {
@@ -134,6 +138,13 @@ function AdminReviews() {
                     (review) => review.id !== reviewId
                 )
             );
+
+            if (
+                selectedReview &&
+                selectedReview.id === reviewId
+            ) {
+                setSelectedReview(null);
+            }
 
             fetchStats();
         } catch (error) {
@@ -175,6 +186,24 @@ function AdminReviews() {
                     <Star
                         key={star}
                         size={16}
+                        fill={
+                            star <= rating
+                                ? "currentColor"
+                                : "none"
+                        }
+                    />
+                ))}
+            </div>
+        );
+    }
+
+    function renderLargeStars(rating) {
+        return (
+            <div className="admin-review-modal-stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                        key={star}
+                        size={22}
                         fill={
                             star <= rating
                                 ? "currentColor"
@@ -284,22 +313,27 @@ function AdminReviews() {
 
                 <div className="admin-rating-breakdown-header">
                     <h2>Rating Breakdown</h2>
+
                     <span>
                         {stats.total_reviews || 0} reviews
                     </span>
                 </div>
 
                 {[5, 4, 3, 2, 1].map((rating) => {
+
+                    const ratingNames = {
+                        1: "one",
+                        2: "two",
+                        3: "three",
+                        4: "four",
+                        5: "five"
+                    };
+
                     const count =
                         Number(
-                            stats[`${[
-                                "",
-                                "one",
-                                "two",
-                                "three",
-                                "four",
-                                "five"
-                            ][rating]}_star`]
+                            stats[
+                                `${ratingNames[rating]}_star`
+                            ]
                         ) || 0;
 
                     const total =
@@ -317,6 +351,7 @@ function AdminReviews() {
                         >
                             <div className="admin-rating-label">
                                 <span>{rating}</span>
+
                                 <Star
                                     size={15}
                                     fill="currentColor"
@@ -345,8 +380,13 @@ function AdminReviews() {
             <div className="admin-reviews-toolbar">
 
                 <div className="admin-review-count">
-                    <strong>{displayedReviews.length}</strong>
-                    <span>reviews found</span>
+                    <strong>
+                        {displayedReviews.length}
+                    </strong>
+
+                    <span>
+                        reviews found
+                    </span>
                 </div>
 
                 <div className="admin-review-search">
@@ -417,6 +457,7 @@ function AdminReviews() {
 
                                 <tr key={review.id}>
 
+                                    {/* Customer */}
                                     <td>
                                         <div className="admin-review-customer">
 
@@ -443,18 +484,22 @@ function AdminReviews() {
                                     </td>
 
 
+                                    {/* Product */}
                                     <td>
                                         <div className="admin-review-product">
+
                                             <Package size={17} />
 
                                             <span>
                                                 {review.product_name ||
                                                     "Unknown Product"}
                                             </span>
+
                                         </div>
                                     </td>
 
 
+                                    {/* Rating */}
                                     <td>
                                         <div className="admin-review-rating">
 
@@ -472,6 +517,7 @@ function AdminReviews() {
                                     </td>
 
 
+                                    {/* Review */}
                                     <td>
                                         <div className="admin-review-comment">
                                             {review.comment ||
@@ -480,6 +526,7 @@ function AdminReviews() {
                                     </td>
 
 
+                                    {/* Date */}
                                     <td>
                                         {formatDate(
                                             review.created_at
@@ -487,18 +534,35 @@ function AdminReviews() {
                                     </td>
 
 
+                                    {/* Actions */}
                                     <td>
-                                        <button
-                                            className="admin-review-delete"
-                                            onClick={() =>
-                                                handleDelete(
-                                                    review.id
-                                                )
-                                            }
-                                            title="Delete review"
-                                        >
-                                            <Trash2 size={17} />
-                                        </button>
+                                        <div className="admin-review-actions">
+
+                                            <button
+                                                className="admin-review-view"
+                                                onClick={() =>
+                                                    setSelectedReview(
+                                                        review
+                                                    )
+                                                }
+                                                title="View review"
+                                            >
+                                                <Eye size={17} />
+                                            </button>
+
+                                            <button
+                                                className="admin-review-delete"
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        review.id
+                                                    )
+                                                }
+                                                title="Delete review"
+                                            >
+                                                <Trash2 size={17} />
+                                            </button>
+
+                                        </div>
                                     </td>
 
                                 </tr>
@@ -511,6 +575,176 @@ function AdminReviews() {
 
                 </div>
 
+            )}
+
+
+            {/* Review Details Modal */}
+            {selectedReview && (
+                <div
+                    className="admin-review-modal-overlay"
+                    onClick={(event) => {
+                        if (
+                            event.target ===
+                            event.currentTarget
+                        ) {
+                            setSelectedReview(null);
+                        }
+                    }}
+                >
+
+                    <div className="admin-review-modal">
+
+                        {/* Modal Header */}
+                        <div className="admin-review-modal-header">
+
+                            <div>
+                                <span>
+                                    REVIEW DETAILS
+                                </span>
+
+                                <h2>
+                                    Customer Review
+                                </h2>
+                            </div>
+
+                            <button
+                                className="admin-review-modal-close"
+                                onClick={() =>
+                                    setSelectedReview(null)
+                                }
+                                title="Close"
+                            >
+                                <X size={19} />
+                            </button>
+
+                        </div>
+
+
+                        {/* Customer */}
+                        <div className="admin-review-modal-customer">
+
+                            <div className="admin-review-modal-avatar">
+                                {selectedReview.customer_name
+                                    ?.charAt(0)
+                                    .toUpperCase() || "U"}
+                            </div>
+
+                            <div>
+                                <strong>
+                                    {selectedReview.customer_name ||
+                                        "Unknown"}
+                                </strong>
+
+                                <span>
+                                    {selectedReview.customer_email ||
+                                        "-"}
+                                </span>
+                            </div>
+
+                        </div>
+
+
+                        {/* Product */}
+                        <div className="admin-review-modal-product">
+
+                            <Package size={20} />
+
+                            <div>
+                                <span>
+                                    PRODUCT
+                                </span>
+
+                                <strong>
+                                    {selectedReview.product_name ||
+                                        "Unknown Product"}
+                                </strong>
+                            </div>
+
+                        </div>
+
+
+                        {/* Rating */}
+                        <div className="admin-review-modal-rating">
+
+                            <div>
+                                <span>
+                                    RATING
+                                </span>
+
+                                {renderLargeStars(
+                                    Number(
+                                        selectedReview.rating
+                                    )
+                                )}
+                            </div>
+
+                            <strong>
+                                {selectedReview.rating}/5
+                            </strong>
+
+                        </div>
+
+
+                        {/* Comment */}
+                        <div className="admin-review-modal-comment">
+
+                            <span>
+                                REVIEW
+                            </span>
+
+                            <p>
+                                {selectedReview.comment ||
+                                    "No comment provided"}
+                            </p>
+
+                        </div>
+
+
+                        {/* Date */}
+                        <div className="admin-review-modal-date">
+
+                            <span>
+                                SUBMITTED
+                            </span>
+
+                            <strong>
+                                {formatDate(
+                                    selectedReview.created_at
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        {/* Modal Actions */}
+                        <div className="admin-review-modal-actions">
+
+                            <button
+                                className="admin-review-modal-cancel"
+                                onClick={() =>
+                                    setSelectedReview(null)
+                                }
+                            >
+                                Close
+                            </button>
+
+                            <button
+                                className="admin-review-modal-delete"
+                                onClick={() =>
+                                    handleDelete(
+                                        selectedReview.id
+                                    )
+                                }
+                            >
+                                <Trash2 size={16} />
+                                Delete Review
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
             )}
 
         </div>

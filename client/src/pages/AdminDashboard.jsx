@@ -23,7 +23,7 @@ function AdminDashboard() {
             }
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/dashboard",
+                "/api/admin/dashboard",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`

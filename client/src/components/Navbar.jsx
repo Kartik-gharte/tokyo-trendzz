@@ -1,3 +1,4 @@
+
 import {
     Search,
     Heart,
@@ -24,6 +25,10 @@ function Navbar() {
 
     const isAdmin = user?.role === "admin";
 
+    const closeMobileMenu = () => {
+        setMobileMenu(false);
+    };
+
     return (
         <header className="navbar">
             <div className="navbar-container">
@@ -32,10 +37,10 @@ function Navbar() {
                 <Link
                     to="/"
                     className="navbar-logo"
+                    onClick={closeMobileMenu}
                 >
                     TOKYO<span>TRENDZ</span>
                 </Link>
-
 
                 {/* DESKTOP NAVIGATION */}
                 <nav className="navbar-links">
@@ -52,14 +57,13 @@ function Navbar() {
                         Women
                     </Link>
 
-                    <Link to="/products">
-                        Collections
+                    <Link to="/products?category=cosmetics">
+                        Cosmetics
                     </Link>
 
                     <Link to="/products">
                         New Arrivals
                     </Link>
-
 
                     {/* ADMIN PANEL */}
                     {isAdmin && (
@@ -73,7 +77,6 @@ function Navbar() {
 
                 </nav>
 
-
                 {/* ACTIONS */}
                 <div className="navbar-actions">
 
@@ -85,7 +88,6 @@ function Navbar() {
                         <Search size={21} />
                     </button>
 
-
                     <Link
                         to="/wishlist"
                         className="nav-icon"
@@ -94,10 +96,8 @@ function Navbar() {
                         <Heart size={21} />
                     </Link>
 
-
                     {/* NOTIFICATIONS */}
                     <NotificationBell />
-
 
                     <Link
                         to="/account"
@@ -106,7 +106,6 @@ function Navbar() {
                     >
                         <User size={21} />
                     </Link>
-
 
                     <Link
                         to="/cart"
@@ -122,15 +121,15 @@ function Navbar() {
                         )}
                     </Link>
 
-
                     {/* MOBILE MENU BUTTON */}
                     <button
                         className="mobile-menu-button"
                         type="button"
-                        aria-label="Menu"
-                        onClick={() =>
-                            setMobileMenu(!mobileMenu)
+                        aria-label={
+                            mobileMenu ? "Close menu" : "Open menu"
                         }
+                        aria-expanded={mobileMenu}
+                        onClick={() => setMobileMenu(!mobileMenu)}
                     >
                         {mobileMenu ? (
                             <X size={24} />
@@ -143,78 +142,54 @@ function Navbar() {
 
             </div>
 
-
             {/* MOBILE MENU */}
             {mobileMenu && (
                 <div className="mobile-menu">
 
-                    <Link
-                        to="/"
-                        onClick={() =>
-                            setMobileMenu(false)
-                        }
-                    >
+                    <Link to="/" onClick={closeMobileMenu}>
                         Home
                     </Link>
 
-
                     <Link
                         to="/products?gender=men"
-                        onClick={() =>
-                            setMobileMenu(false)
-                        }
+                        onClick={closeMobileMenu}
                     >
                         Men
                     </Link>
 
-
                     <Link
                         to="/products?gender=women"
-                        onClick={() =>
-                            setMobileMenu(false)
-                        }
+                        onClick={closeMobileMenu}
                     >
                         Women
                     </Link>
 
-
                     <Link
-                        to="/products"
-                        onClick={() =>
-                            setMobileMenu(false)
-                        }
+                        to="/products?category=cosmetics"
+                        onClick={closeMobileMenu}
                     >
-                        Collections
+                        Cosmetics
                     </Link>
 
-
                     <Link
                         to="/products"
-                        onClick={() =>
-                            setMobileMenu(false)
-                        }
+                        onClick={closeMobileMenu}
                     >
                         New Arrivals
                     </Link>
 
-
                     <Link
                         to="/cart"
-                        onClick={() =>
-                            setMobileMenu(false)
-                        }
+                        onClick={closeMobileMenu}
                     >
                         Cart ({cartCount})
                     </Link>
-
 
                     {/* MOBILE ADMIN PANEL */}
                     {isAdmin && (
                         <Link
                             to="/admin/dashboard"
-                            onClick={() =>
-                                setMobileMenu(false)
-                            }
+                            onClick={closeMobileMenu}
                             className="mobile-admin-link"
                         >
                             Admin Panel

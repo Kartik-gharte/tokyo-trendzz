@@ -46,7 +46,7 @@ function AdminAddresses() {
             );
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/addresses",
+                "/api/admin/addresses",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -96,7 +96,7 @@ function AdminAddresses() {
             );
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/addresses/${addressId}`,
+                `/api/admin/addresses/${addressId}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -150,7 +150,7 @@ function AdminAddresses() {
             );
 
             const response = await fetch(
-                `http://localhost:5000/api/admin/addresses/${addressId}`,
+                `/api/admin/addresses/${addressId}`,
                 {
                     method: "DELETE",
                     headers: {

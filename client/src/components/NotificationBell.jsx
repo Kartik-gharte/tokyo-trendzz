@@ -16,7 +16,7 @@ function NotificationBell() {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/notifications",
+                "/api/notifications",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -44,7 +44,7 @@ function NotificationBell() {
 
         try {
             const response = await fetch(
-                "http://localhost:5000/api/notifications/unread-count",
+                "/api/notifications/unread-count",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -77,7 +77,7 @@ function NotificationBell() {
 
         try {
             const response = await fetch(
-                `http://localhost:5000/api/notifications/${notification.id}/read`,
+                `/api/notifications/${notification.id}/read`,
                 {
                     method: "PATCH",
                     headers: {

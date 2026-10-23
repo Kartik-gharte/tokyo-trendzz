@@ -9,7 +9,7 @@ import { useAuth } from "./AuthContext";
 
 const CartContext = createContext();
 
-const API_URL = "http://localhost:5000/api/cart";
+const API_URL = "/api/cart";
 
 export function CartProvider({ children }) {
     const { user, token, isAuthenticated } = useAuth();
@@ -134,41 +134,81 @@ export function CartProvider({ children }) {
                 return;
             }
 
+            const failedItems = [];
+
             for (const item of guestItems) {
                 if (
                     !item.productId ||
                     !item.variantId
                 ) {
+                    failedItems.push(item);
                     continue;
                 }
 
-                await fetch(API_URL, {
-                    method: "POST",
+                try {
+                    const response = await fetch(
+                        API_URL,
+                        {
+                            method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json",
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
 
-                        Authorization:
-                            `Bearer ${token}`
-                    },
+                                Authorization:
+                                    `Bearer ${token}`
+                            },
 
-                    body: JSON.stringify({
-                        productId:
-                            item.productId,
+                            body: JSON.stringify({
+                                productId:
+                                    item.productId,
 
-                        variantId:
-                            item.variantId,
+                                variantId:
+                                    item.variantId,
 
-                        quantity:
-                            item.quantity
-                    })
-                });
+                                quantity:
+                                    item.quantity
+                            })
+                        }
+                    );
+
+                    const data =
+                        await response.json();
+
+                    if (!response.ok) {
+                        console.error(
+                            "Guest cart item merge failed:",
+                            data.message ||
+                            "Unable to merge cart item"
+                        );
+
+                        failedItems.push(item);
+                    }
+
+                } catch (itemError) {
+                    console.error(
+                        "Guest cart item merge error:",
+                        itemError
+                    );
+
+                    failedItems.push(item);
+                }
             }
 
-            localStorage.removeItem(
-                "tokyo_trendz_cart"
-            );
+            // --------------------------------
+            // Keep only failed items in guest cart
+            // --------------------------------
+
+            if (failedItems.length > 0) {
+                localStorage.setItem(
+                    "tokyo_trendz_cart",
+                    JSON.stringify(failedItems)
+                );
+            } else {
+                localStorage.removeItem(
+                    "tokyo_trendz_cart"
+                );
+            }
 
         } catch (error) {
             console.error(

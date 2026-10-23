@@ -4,7 +4,11 @@ import {
     ShoppingCart,
     IndianRupee,
     Package,
-    RefreshCw
+    RefreshCw,
+    BarChart3,
+    Activity,
+    Layers3,
+    AlertCircle
 } from "lucide-react";
 
 import "./AdminAnalytics.css";
@@ -19,6 +23,9 @@ function AdminAnalytics() {
         fetchAnalytics();
     }, []);
 
+    // ==========================================
+    // FETCH ANALYTICS
+    // ==========================================
     async function fetchAnalytics() {
         try {
             setLoading(true);
@@ -35,7 +42,7 @@ function AdminAnalytics() {
             }
 
             const response = await fetch(
-                "http://localhost:5000/api/admin/analytics",
+                "/api/admin/analytics",
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -60,13 +67,19 @@ function AdminAnalytics() {
                 error
             );
 
-            setError(error.message);
+            setError(
+                error.message ||
+                "Failed to load analytics"
+            );
 
         } finally {
             setLoading(false);
         }
     }
 
+    // ==========================================
+    // FORMAT CURRENCY
+    // ==========================================
     function formatCurrency(amount) {
         return `₹${Number(
             amount || 0
@@ -75,6 +88,9 @@ function AdminAnalytics() {
         })}`;
     }
 
+    // ==========================================
+    // FORMAT STATUS
+    // ==========================================
     function formatStatus(status) {
         return status
             .replaceAll("_", " ")
@@ -83,6 +99,9 @@ function AdminAnalytics() {
             );
     }
 
+    // ==========================================
+    // FORMAT MONTH
+    // ==========================================
     function formatMonth(month) {
         if (!month) {
             return "-";
@@ -101,32 +120,63 @@ function AdminAnalytics() {
         );
     }
 
+    // ==========================================
+    // LOADING
+    // ==========================================
     if (loading) {
         return (
             <div className="admin-analytics">
+
                 <div className="analytics-loading">
-                    Loading analytics...
+
+                    <div className="analytics-loading-icon">
+                        <BarChart3 size={28} />
+                    </div>
+
+                    <h3>
+                        Loading analytics
+                    </h3>
+
+                    <p>
+                        Preparing your store performance data...
+                    </p>
+
                 </div>
+
             </div>
         );
     }
 
+    // ==========================================
+    // ERROR
+    // ==========================================
     if (error) {
         return (
             <div className="admin-analytics">
+
                 <div className="analytics-error">
+
+                    <div className="analytics-error-icon">
+                        <AlertCircle size={28} />
+                    </div>
+
                     <h2>
                         Unable to load analytics
                     </h2>
 
-                    <p>{error}</p>
+                    <p>
+                        {error}
+                    </p>
 
                     <button
                         onClick={fetchAnalytics}
                     >
+                        <RefreshCw size={15} />
                         Try Again
                     </button>
+
                 </div>
+
             </div>
         );
     }
@@ -140,13 +190,29 @@ function AdminAnalytics() {
 
             <div className="analytics-header">
 
-                <div>
-                    <h1>Analytics</h1>
+                <div className="analytics-header-content">
 
-                    <p>
-                        Track Tokyo Trendz sales,
-                        orders and product performance.
-                    </p>
+                    <div className="analytics-title-icon">
+                        <BarChart3 size={24} />
+                    </div>
+
+                    <div>
+
+                        <div className="analytics-eyebrow">
+                            TOKYO TRENDZ / PERFORMANCE
+                        </div>
+
+                        <h1>
+                            Analytics
+                        </h1>
+
+                        <p>
+                            Track sales, orders and
+                            product performance.
+                        </p>
+
+                    </div>
+
                 </div>
 
                 <button
@@ -154,13 +220,14 @@ function AdminAnalytics() {
                     onClick={fetchAnalytics}
                 >
                     <RefreshCw size={16} />
-                    Refresh
+                    Refresh Analytics
                 </button>
 
             </div>
 
+
             {/* ==========================================
-                SUMMARY CARDS
+                SUMMARY
             ========================================== */}
 
             <div className="analytics-summary">
@@ -168,72 +235,108 @@ function AdminAnalytics() {
                 <div className="analytics-card">
 
                     <div className="analytics-card-icon">
-                        <IndianRupee size={22} />
+                        <IndianRupee size={21} />
                     </div>
 
-                    <div>
-                        <span>Total Revenue</span>
+                    <div className="analytics-card-content">
+
+                        <span>
+                            TOTAL REVENUE
+                        </span>
 
                         <strong>
                             {formatCurrency(
                                 analytics.total_revenue
                             )}
                         </strong>
+
+                        <small>
+                            Overall store revenue
+                        </small>
+
                     </div>
 
                 </div>
 
+
                 <div className="analytics-card">
 
                     <div className="analytics-card-icon">
-                        <ShoppingCart size={22} />
+                        <ShoppingCart size={21} />
                     </div>
 
-                    <div>
-                        <span>Total Orders</span>
+                    <div className="analytics-card-content">
+
+                        <span>
+                            TOTAL ORDERS
+                        </span>
 
                         <strong>
                             {analytics.total_orders}
                         </strong>
+
+                        <small>
+                            Orders recorded
+                        </small>
+
                     </div>
 
                 </div>
 
+
                 <div className="analytics-card">
 
                     <div className="analytics-card-icon">
-                        <TrendingUp size={22} />
+                        <TrendingUp size={21} />
                     </div>
 
-                    <div>
-                        <span>Average Order Value</span>
+                    <div className="analytics-card-content">
+
+                        <span>
+                            AVERAGE ORDER VALUE
+                        </span>
 
                         <strong>
                             {formatCurrency(
                                 analytics.average_order_value
                             )}
                         </strong>
+
+                        <small>
+                            Average per order
+                        </small>
+
                     </div>
 
                 </div>
 
+
                 <div className="analytics-card">
 
                     <div className="analytics-card-icon">
-                        <Package size={22} />
+                        <Package size={21} />
                     </div>
 
-                    <div>
-                        <span>Top Products</span>
+                    <div className="analytics-card-content">
+
+                        <span>
+                            TOP PRODUCTS
+                        </span>
 
                         <strong>
                             {analytics.top_products.length}
                         </strong>
+
+                        <small>
+                            Products with sales data
+                        </small>
+
                     </div>
 
                 </div>
 
             </div>
+
 
             {/* ==========================================
                 MONTHLY SALES
@@ -242,38 +345,88 @@ function AdminAnalytics() {
             <div className="analytics-section">
 
                 <div className="analytics-section-header">
-                    <h2>Monthly Sales</h2>
+
+                    <div className="analytics-section-title">
+
+                        <div className="analytics-section-icon">
+                            <TrendingUp size={18} />
+                        </div>
+
+                        <div>
+                            <h2>
+                                Monthly Sales
+                            </h2>
+
+                            <p>
+                                Revenue and order performance
+                                by month.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <span className="analytics-section-badge">
+                        SALES
+                    </span>
+
                 </div>
 
                 {analytics.monthly_sales.length === 0 ? (
+
                     <div className="analytics-empty">
-                        No sales data available.
+
+                        <div className="analytics-empty-icon">
+                            <TrendingUp size={24} />
+                        </div>
+
+                        <strong>
+                            No sales data available
+                        </strong>
+
+                        <span>
+                            Monthly sales information will
+                            appear here.
+                        </span>
+
                     </div>
+
                 ) : (
+
                     <div className="analytics-table-wrapper">
 
                         <table className="analytics-table">
 
                             <thead>
+
                                 <tr>
                                     <th>Month</th>
                                     <th>Orders</th>
                                     <th>Revenue</th>
                                 </tr>
+
                             </thead>
 
                             <tbody>
 
                                 {analytics.monthly_sales.map(
                                     (item) => (
+
                                         <tr key={item.month}>
 
                                             <td>
-                                                <strong>
-                                                    {formatMonth(
-                                                        item.month
-                                                    )}
-                                                </strong>
+                                                <div className="analytics-primary-cell">
+                                                    <span className="analytics-row-icon">
+                                                        <Activity
+                                                            size={15}
+                                                        />
+                                                    </span>
+
+                                                    <strong>
+                                                        {formatMonth(
+                                                            item.month
+                                                        )}
+                                                    </strong>
+                                                </div>
                                             </td>
 
                                             <td>
@@ -281,12 +434,15 @@ function AdminAnalytics() {
                                             </td>
 
                                             <td>
-                                                {formatCurrency(
-                                                    item.revenue
-                                                )}
+                                                <strong className="analytics-revenue">
+                                                    {formatCurrency(
+                                                        item.revenue
+                                                    )}
+                                                </strong>
                                             </td>
 
                                         </tr>
+
                                     )
                                 )}
 
@@ -299,6 +455,7 @@ function AdminAnalytics() {
 
             </div>
 
+
             {/* ==========================================
                 ORDER STATUS
             ========================================== */}
@@ -306,35 +463,96 @@ function AdminAnalytics() {
             <div className="analytics-section">
 
                 <div className="analytics-section-header">
-                    <h2>Order Status</h2>
-                </div>
 
-                <div className="analytics-status-grid">
+                    <div className="analytics-section-title">
 
-                    {analytics.order_statuses.map(
-                        (item) => (
-                            <div
-                                className="analytics-status-card"
-                                key={item.order_status}
-                            >
+                        <div className="analytics-section-icon">
+                            <ShoppingCart size={18} />
+                        </div>
 
-                                <span>
-                                    {formatStatus(
-                                        item.order_status
-                                    )}
-                                </span>
+                        <div>
+                            <h2>
+                                Order Status
+                            </h2>
 
-                                <strong>
-                                    {item.count}
-                                </strong>
+                            <p>
+                                Current distribution of orders.
+                            </p>
+                        </div>
 
-                            </div>
-                        )
-                    )}
+                    </div>
+
+                    <span className="analytics-section-badge">
+                        ORDERS
+                    </span>
 
                 </div>
+
+
+                {analytics.order_statuses.length === 0 ? (
+
+                    <div className="analytics-empty">
+
+                        <div className="analytics-empty-icon">
+                            <ShoppingCart size={24} />
+                        </div>
+
+                        <strong>
+                            No order status data
+                        </strong>
+
+                        <span>
+                            Order statistics will appear here.
+                        </span>
+
+                    </div>
+
+                ) : (
+
+                    <div className="analytics-status-grid">
+
+                        {analytics.order_statuses.map(
+                            (item) => (
+
+                                <div
+                                    className="analytics-status-card"
+                                    key={item.order_status}
+                                >
+
+                                    <div className="analytics-status-top">
+
+                                        <div className="analytics-status-icon">
+                                            <ShoppingCart
+                                                size={17}
+                                            />
+                                        </div>
+
+                                        <span>
+                                            STATUS
+                                        </span>
+
+                                    </div>
+
+                                    <strong>
+                                        {item.count}
+                                    </strong>
+
+                                    <p>
+                                        {formatStatus(
+                                            item.order_status
+                                        )}
+                                    </p>
+
+                                </div>
+
+                            )
+                        )}
+
+                    </div>
+                )}
 
             </div>
+
 
             {/* ==========================================
                 TOP PRODUCTS
@@ -343,30 +561,71 @@ function AdminAnalytics() {
             <div className="analytics-section">
 
                 <div className="analytics-section-header">
-                    <h2>Top Products</h2>
+
+                    <div className="analytics-section-title">
+
+                        <div className="analytics-section-icon">
+                            <Package size={18} />
+                        </div>
+
+                        <div>
+                            <h2>
+                                Top Products
+                            </h2>
+
+                            <p>
+                                Best-performing products by sales.
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <span className="analytics-section-badge">
+                        PRODUCTS
+                    </span>
+
                 </div>
 
                 {analytics.top_products.length === 0 ? (
+
                     <div className="analytics-empty">
-                        No product sales available.
+
+                        <div className="analytics-empty-icon">
+                            <Package size={24} />
+                        </div>
+
+                        <strong>
+                            No product sales available
+                        </strong>
+
+                        <span>
+                            Product performance will appear
+                            after sales are recorded.
+                        </span>
+
                     </div>
+
                 ) : (
+
                     <div className="analytics-table-wrapper">
 
                         <table className="analytics-table">
 
                             <thead>
+
                                 <tr>
                                     <th>Product</th>
                                     <th>Units Sold</th>
                                     <th>Revenue</th>
                                 </tr>
+
                             </thead>
 
                             <tbody>
 
                                 {analytics.top_products.map(
                                     (product) => (
+
                                         <tr
                                             key={
                                                 product.product_id
@@ -374,11 +633,23 @@ function AdminAnalytics() {
                                         >
 
                                             <td>
-                                                <strong>
-                                                    {
-                                                        product.product_name
-                                                    }
-                                                </strong>
+
+                                                <div className="analytics-primary-cell">
+
+                                                    <span className="analytics-row-icon">
+                                                        <Package
+                                                            size={15}
+                                                        />
+                                                    </span>
+
+                                                    <strong>
+                                                        {
+                                                            product.product_name
+                                                        }
+                                                    </strong>
+
+                                                </div>
+
                                             </td>
 
                                             <td>
@@ -388,12 +659,15 @@ function AdminAnalytics() {
                                             </td>
 
                                             <td>
-                                                {formatCurrency(
-                                                    product.revenue
-                                                )}
+                                                <strong className="analytics-revenue">
+                                                    {formatCurrency(
+                                                        product.revenue
+                                                    )}
+                                                </strong>
                                             </td>
 
                                         </tr>
+
                                     )
                                 )}
 
@@ -406,6 +680,7 @@ function AdminAnalytics() {
 
             </div>
 
+
             {/* ==========================================
                 TOP CATEGORIES
             ========================================== */}
@@ -413,31 +688,74 @@ function AdminAnalytics() {
             <div className="analytics-section">
 
                 <div className="analytics-section-header">
-                    <h2>Top Categories</h2>
+
+                    <div className="analytics-section-title">
+
+                        <div className="analytics-section-icon">
+                            <Layers3 size={18} />
+                        </div>
+
+                        <div>
+                            <h2>
+                                Top Categories
+                            </h2>
+
+                            <p>
+                                Category performance across
+                                your store.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <span className="analytics-section-badge">
+                        CATEGORIES
+                    </span>
+
                 </div>
 
                 {analytics.top_categories.length === 0 ? (
+
                     <div className="analytics-empty">
-                        No category sales available.
+
+                        <div className="analytics-empty-icon">
+                            <Layers3 size={24} />
+                        </div>
+
+                        <strong>
+                            No category sales available
+                        </strong>
+
+                        <span>
+                            Category performance will appear
+                            after sales are recorded.
+                        </span>
+
                     </div>
+
                 ) : (
+
                     <div className="analytics-table-wrapper">
 
                         <table className="analytics-table">
 
                             <thead>
+
                                 <tr>
                                     <th>Category</th>
                                     <th>Orders</th>
                                     <th>Units Sold</th>
                                     <th>Revenue</th>
                                 </tr>
+
                             </thead>
 
                             <tbody>
 
                                 {analytics.top_categories.map(
                                     (category) => (
+
                                         <tr
                                             key={
                                                 category.category_id
@@ -445,11 +763,23 @@ function AdminAnalytics() {
                                         >
 
                                             <td>
-                                                <strong>
-                                                    {
-                                                        category.category_name
-                                                    }
-                                                </strong>
+
+                                                <div className="analytics-primary-cell">
+
+                                                    <span className="analytics-row-icon">
+                                                        <Layers3
+                                                            size={15}
+                                                        />
+                                                    </span>
+
+                                                    <strong>
+                                                        {
+                                                            category.category_name
+                                                        }
+                                                    </strong>
+
+                                                </div>
+
                                             </td>
 
                                             <td>
@@ -465,12 +795,15 @@ function AdminAnalytics() {
                                             </td>
 
                                             <td>
-                                                {formatCurrency(
-                                                    category.revenue
-                                                )}
+                                                <strong className="analytics-revenue">
+                                                    {formatCurrency(
+                                                        category.revenue
+                                                    )}
+                                                </strong>
                                             </td>
 
                                         </tr>
+
                                     )
                                 )}
 
