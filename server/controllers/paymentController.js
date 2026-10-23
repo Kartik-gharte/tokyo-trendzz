@@ -494,18 +494,19 @@ async function verifyRazorpayPayment(req, res) {
     */
 
     /*
-STEP 3: Begin database transaction.
+    /*
+    STEP 3: Begin database transaction.
 
-db is a MySQL connection pool, so obtain a dedicated
-connection for the transaction and release it afterward.
-*/
+    db is a MySQL pool. Get a dedicated connection
+    and release it when the transaction finishes.
+    */
 
-let connection;
+    let connection;
 
-try {
-    connection = await db.promise().getConnection();
+    try {
+        connection = await db.promise().getConnection();
 
-    await beginTransaction(connection);
+        await beginTransaction(connection);
 
         /*
         STEP 4: Idempotency check.
@@ -662,10 +663,10 @@ try {
         }
 
         /*
-        STEP 7: Verify the amount against the server-calculated total.
+        STEP 7: Verify payment amount.
 
         Online: full amount.
-        COD: ₹120 or the full total if the total is less than ₹120.
+        COD: ₹120 or the full total if below ₹120.
         */
 
         const advanceAmount =
@@ -753,17 +754,7 @@ try {
         const orderNumber = `TT-${Date.now()}-${userId}`;
 
         /*
-        STEP 9: Create the order.
-
-        Online:
-            payment_status = paid
-            advance_paid = full total
-            balance_due = 0
-
-        COD:
-            payment_status = pending (the COD balance remains outstanding)
-            advance_paid = the captured Razorpay advance
-            balance_due = remaining amount payable on delivery
+        STEP 9: Create order.
         */
 
         const paymentStatus =
@@ -956,7 +947,7 @@ try {
                 razorpayPaymentId: razorpay_payment_id
             }
         });
-        } catch (error) {
+    } catch (error) {
         console.error(
             "Payment verification/order creation error:",
             error
@@ -977,12 +968,6 @@ try {
         }
     }
 }
-
-/*
-============================================================
-EXPORTS
-============================================================
-*/
 
 module.exports = {
     createRazorpayOrder,
